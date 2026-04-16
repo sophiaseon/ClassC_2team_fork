@@ -1,1 +1,1 @@
-/home/user/work/practice_dd/EX04-06_buzzer/buzzertest.o
+/home/user/AA/ClassC_2team/device_driver/buzzer/buzzertest.o

@@ -1,8 +1,8 @@
-cmd_/home/user/work/practice_dd/EX04-06_buzzer/buzzertest.o := aarch64-linux-gnu-gcc -Wp,-MMD,/home/user/work/practice_dd/EX04-06_buzzer/.buzzertest.o.d -nostdinc -I./arch/arm64/include -I./arch/arm64/include/generated  -I./include -I./arch/arm64/include/uapi -I./arch/arm64/include/generated/uapi -I./include/uapi -I./include/generated/uapi -include ./include/linux/compiler-version.h -include ./include/linux/kconfig.h -include ./include/linux/compiler_types.h -D__KERNEL__ -mlittle-endian -DKASAN_SHADOW_SCALE_SHIFT= -Wall -Wundef -Werror=strict-prototypes -Wno-trigraphs -fno-strict-aliasing -fno-common -fshort-wchar -fno-PIE -Werror=implicit-function-declaration -Werror=implicit-int -Werror=return-type -Wno-format-security -std=gnu11 -mgeneral-regs-only -Wno-psabi -mabi=lp64 -fno-asynchronous-unwind-tables -fno-unwind-tables -Wa,-march=armv8.2-a -DARM64_ASM_ARCH='"armv8.2-a"' -DKASAN_SHADOW_SCALE_SHIFT= -fno-delete-null-pointer-checks -Wno-frame-address -Wno-format-truncation -Wno-format-overflow -O2 --param=allow-store-data-races=0 -Wframe-larger-than=2048 -fstack-protector-strong -Wno-main -Wno-unused-but-set-variable -Wno-unused-const-variable -fno-omit-frame-pointer -fno-optimize-sibling-calls -pg -Wdeclaration-after-statement -Wvla -Wno-pointer-sign -Wno-stringop-overflow -Wno-restrict -Wno-maybe-uninitialized -Wimplicit-fallthrough=5 -fno-strict-overflow -fno-stack-check -fconserve-stack -Werror=date-time -Werror=incompatible-pointer-types -Werror=designated-init  -DMODULE  -DKBUILD_BASENAME='"buzzertest"' -DKBUILD_MODNAME='"buzzertest"' -D__KBUILD_MODNAME=kmod_buzzertest -c -o /home/user/work/practice_dd/EX04-06_buzzer/buzzertest.o /home/user/work/practice_dd/EX04-06_buzzer/buzzertest.c  
+cmd_/home/user/AA/ClassC_2team/device_driver/buzzer/buzzertest.o := aarch64-linux-gnu-gcc -Wp,-MMD,/home/user/AA/ClassC_2team/device_driver/buzzer/.buzzertest.o.d -nostdinc -I./arch/arm64/include -I./arch/arm64/include/generated  -I./include -I./arch/arm64/include/uapi -I./arch/arm64/include/generated/uapi -I./include/uapi -I./include/generated/uapi -include ./include/linux/compiler-version.h -include ./include/linux/kconfig.h -include ./include/linux/compiler_types.h -D__KERNEL__ -mlittle-endian -DKASAN_SHADOW_SCALE_SHIFT= -Wall -Wundef -Werror=strict-prototypes -Wno-trigraphs -fno-strict-aliasing -fno-common -fshort-wchar -fno-PIE -Werror=implicit-function-declaration -Werror=implicit-int -Werror=return-type -Wno-format-security -std=gnu11 -mgeneral-regs-only -Wno-psabi -mabi=lp64 -fno-asynchronous-unwind-tables -fno-unwind-tables -Wa,-march=armv8.2-a -DARM64_ASM_ARCH='"armv8.2-a"' -DKASAN_SHADOW_SCALE_SHIFT= -fno-delete-null-pointer-checks -Wno-frame-address -Wno-format-truncation -Wno-format-overflow -O2 --param=allow-store-data-races=0 -Wframe-larger-than=2048 -fstack-protector-strong -Wno-main -Wno-unused-but-set-variable -Wno-unused-const-variable -fno-omit-frame-pointer -fno-optimize-sibling-calls -pg -Wdeclaration-after-statement -Wvla -Wno-pointer-sign -Wno-stringop-overflow -Wno-restrict -Wno-maybe-uninitialized -Wimplicit-fallthrough=5 -fno-strict-overflow -fno-stack-check -fconserve-stack -Werror=date-time -Werror=incompatible-pointer-types -Werror=designated-init  -DMODULE  -DKBUILD_BASENAME='"buzzertest"' -DKBUILD_MODNAME='"buzzertest"' -D__KBUILD_MODNAME=kmod_buzzertest -c -o /home/user/AA/ClassC_2team/device_driver/buzzer/buzzertest.o /home/user/AA/ClassC_2team/device_driver/buzzer/buzzertest.c  
 
-source_/home/user/work/practice_dd/EX04-06_buzzer/buzzertest.o := /home/user/work/practice_dd/EX04-06_buzzer/buzzertest.c
+source_/home/user/AA/ClassC_2team/device_driver/buzzer/buzzertest.o := /home/user/AA/ClassC_2team/device_driver/buzzer/buzzertest.c
 
-deps_/home/user/work/practice_dd/EX04-06_buzzer/buzzertest.o := \
+deps_/home/user/AA/ClassC_2team/device_driver/buzzer/buzzertest.o := \
   include/linux/compiler-version.h \
     $(wildcard include/config/CC_VERSION_TEXT) \
   include/linux/kconfig.h \
@@ -1099,8 +1099,8 @@ deps_/home/user/work/practice_dd/EX04-06_buzzer/buzzertest.o := \
   include/linux/pwm.h \
     $(wildcard include/config/PWM) \
     $(wildcard include/config/PWM_SYSFS) \
-  /home/user/work/practice_dd/EX04-06_buzzer/my_ioctl.h \
+  /home/user/AA/ClassC_2team/device_driver/buzzer/my_ioctl.h \
 
-/home/user/work/practice_dd/EX04-06_buzzer/buzzertest.o: $(deps_/home/user/work/practice_dd/EX04-06_buzzer/buzzertest.o)
+/home/user/AA/ClassC_2team/device_driver/buzzer/buzzertest.o: $(deps_/home/user/AA/ClassC_2team/device_driver/buzzer/buzzertest.o)
 
-$(deps_/home/user/work/practice_dd/EX04-06_buzzer/buzzertest.o):
+$(deps_/home/user/AA/ClassC_2team/device_driver/buzzer/buzzertest.o):
