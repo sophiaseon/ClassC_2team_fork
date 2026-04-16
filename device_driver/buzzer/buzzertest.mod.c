@@ -63,4 +63,4 @@ MODULE_INFO(depends, "");
 MODULE_ALIAS("of:N*T*Cmy-buzzer");
 MODULE_ALIAS("of:N*T*Cmy-buzzerC*");
 
-MODULE_INFO(srcversion, "825068F2F09E481923E6E5A");
+MODULE_INFO(srcversion, "3AD2386778BDEA2ED6EBBC6");

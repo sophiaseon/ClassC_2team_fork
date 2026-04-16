@@ -52,6 +52,7 @@ static int phy_base;
 static int phy_size;
 static int current_song = -1;
 static int is_playing = 0;
+static volatile int g_stop = 0;  /* set to 1 by IOCTL_STOP */
 
 
 #define BASE 500
@@ -163,7 +164,11 @@ void play_tetris(void) {
 	printk("buzzertest: playing tetris\n");
 	static const char *tetris_notes = "LBLBMALAJAMALBJBHBJBHBHBJAHBGAHAEB";
 
+	g_stop = 0;  /* reset stop flag at start */
+
 	while (tetris_notes[i] && tetris_notes[i + 1]) {
+
+		if (g_stop) break;  /* stop requested — exit immediately */
 
 		char tone = tetris_notes[i];
 		char note = tetris_notes[i + 1];
@@ -185,6 +190,8 @@ void play_tetris(void) {
 
 		i += 2;
 	}
+	/* Ensure buzzer is silent after play (or early stop) */
+	iowrite32(0x80, (void *)(pwm_base + PWM_CTL));
 }
 
 static long device_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
@@ -198,6 +205,10 @@ static long device_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 		break;
 	case IOCTL_PLAY_MARIO:
 		play_super_mario();
+		break;
+	case IOCTL_STOP:
+		g_stop = 1;  /* signal any running play loop to exit */
+		iowrite32(0x80, (void *)(pwm_base + PWM_CTL));  /* silence PWM immediately */
 		break;
 	default:
 		return -EINVAL;
