@@ -4,24 +4,23 @@
 #include <QObject>
 #include <QThread>
 
-// Runs in a dedicated thread. Uses poll() on both the device fd and an eventfd
-// so that stop() can unblock poll() instantly without relying on close().
+// Runs in a dedicated thread. Does a blocking read() on the device fd.
+// Uses a self-pipe so that stop() can interrupt the blocking select() instantly.
 class ButtonWorker : public QObject
 {
     Q_OBJECT
 public:
-    explicit ButtonWorker(int fd, int efd, QObject *parent = nullptr);
+    explicit ButtonWorker(int fd, int stopPipeRead, QObject *parent = nullptr);
 
 public slots:
-    void run();   // called when thread starts
-    void stop();  // writes to eventfd → poll() wakes up → loop exits
+    void run();
 
 signals:
     void buttonPressed();
 
 private:
-    int m_fd;   // /dev/mydev (blocking)
-    int m_efd;  // eventfd used as stop signal
+    int m_fd;           // /dev/my_dev0 (blocking)
+    int m_stopPipeRead; // read end of stop-pipe
 };
 
 // Lives in the main thread. Owns the worker thread and relays its signal.
@@ -37,7 +36,7 @@ signals:
 
 private:
     int          m_fd;
-    int          m_efd;
+    int          m_stopPipe[2]; // [0]=read, [1]=write
     QThread      m_thread;
     ButtonWorker *m_worker;
 };
