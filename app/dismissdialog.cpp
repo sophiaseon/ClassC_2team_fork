@@ -34,6 +34,11 @@ DismissDialog::DismissDialog(const QStringList &alarmTimes,
     , m_cameraPreviewLabel(nullptr)
     , m_captureRequested(false)
     , m_alarmId(alarmId)
+    , m_gameEngine(nullptr)
+    , m_btnCountLabel(nullptr)
+    , m_btnTargetLabel(nullptr)
+    , m_btnCountdownLabel(nullptr)
+    , m_btnStatusLabel(nullptr)
 {
     for (int i = 0; i < 25; ++i) m_numButtons[i] = nullptr;
     for (int i = 0; i < 4; ++i) m_colorButtons[i] = nullptr;
@@ -341,7 +346,7 @@ void DismissDialog::buildColorMemoryGameUi(const QStringList &alarmTimes)
 
 void DismissDialog::startColorMemoryRound()
 {
-    static const int roundLengths[3] = { 5, 6, 7 };
+    static const int roundLengths[3] = { 6, 6, 6 };  // 모든 라운드 6회로 통일
 
     if (m_colorRound >= 3) {
         accept();
@@ -388,7 +393,7 @@ void DismissDialog::showColorMemoryStep()
     const int color = m_colorSequence[m_colorShowIndex];
     setPreviewColor(color, true);
 
-    QTimer::singleShot(300, this, [this]() {
+    QTimer::singleShot(500, this, [this]() {  // 색 표시 시간 0.5초
         setPreviewColor(-1, false);
         ++m_colorShowIndex;
         QTimer::singleShot(160, this, &DismissDialog::showColorMemoryStep);
@@ -457,12 +462,16 @@ void DismissDialog::onColorClicked(int colorIndex)
     }
 }
 
-// ── dismiss() — called by MainWindow when physical button pressed ─────────────
+// ── dismiss() — no longer used for Button mode (kept for API compat) ─────────
 void DismissDialog::dismiss()
 {
-    if (m_mode == Button) {
-        accept();
-    }
+    // Button mode now uses the GameEngine. dismiss() is a no-op.
+}
+
+void DismissDialog::onButtonPressedForGame()
+{
+    if (m_mode != Button || !m_gameEngine) return;
+    m_gameEngine->onButtonPressed();
 }
 
 void DismissDialog::captureByButton()
@@ -488,35 +497,74 @@ void DismissDialog::captureByButton()
     m_cameraThread->requestCapture(photoPath);
 }
 
-// ── Button mode UI ────────────────────────────────────────────────────────────
+// ── Button mode UI (GameEngine-based) ───────────────────────────────────────
 void DismissDialog::buildButtonUi(const QStringList &alarmTimes)
 {
-    setFixedSize(420, 240);
+    setFixedSize(480, 440);
 
     QVBoxLayout *root = new QVBoxLayout(this);
-    root->setContentsMargins(24, 20, 24, 20);
-    root->setSpacing(14);
+    root->setContentsMargins(24, 16, 24, 16);
+    root->setSpacing(8);
 
-    QLabel *titleLabel = new QLabel("🔔  Alarm is ringing!", this);
+    QLabel *titleLabel = new QLabel("Alarm is ringing!", this);
     titleLabel->setAlignment(Qt::AlignCenter);
     titleLabel->setStyleSheet(
         "QLabel { font-size: 20px; font-weight: 700; color: #ff6666; }"
     );
     root->addWidget(titleLabel);
 
-    QLabel *timesLabel = new QLabel(alarmTimes.join("\n"), this);
+    QLabel *timesLabel = new QLabel(alarmTimes.join("  /  "), this);
     timesLabel->setAlignment(Qt::AlignCenter);
-    timesLabel->setStyleSheet(
-        "QLabel { font-size: 14px; color: #dddddd; }"
-    );
+    timesLabel->setStyleSheet("QLabel { font-size: 13px; color: #aaaaaa; }");
     root->addWidget(timesLabel);
 
-    QLabel *instrLabel = new QLabel("Press the physical button to dismiss the alarm", this);
-    instrLabel->setAlignment(Qt::AlignCenter);
-    instrLabel->setStyleSheet(
+    // Countdown
+    m_btnCountdownLabel = new QLabel(QString::number(GameEngine::GAME_DURATION), this);
+    m_btnCountdownLabel->setAlignment(Qt::AlignCenter);
+    m_btnCountdownLabel->setStyleSheet(
+        "QLabel { font-size: 56px; font-weight: 700; color: #ffffff; }"
+    );
+    root->addWidget(m_btnCountdownLabel);
+
+    // Current press count (big)
+    m_btnCountLabel = new QLabel("0", this);
+    m_btnCountLabel->setAlignment(Qt::AlignCenter);
+    m_btnCountLabel->setStyleSheet(
+        "QLabel { font-size: 80px; font-weight: 800; color: #2d7dff; }"
+    );
+    root->addWidget(m_btnCountLabel);
+
+    // Progress
+    m_btnTargetLabel = new QLabel("0 / ?", this);
+    m_btnTargetLabel->setAlignment(Qt::AlignCenter);
+    m_btnTargetLabel->setStyleSheet(
+        "QLabel { font-size: 20px; font-weight: 600; color: #aaaaaa; }"
+    );
+    root->addWidget(m_btnTargetLabel);
+
+    // Status message
+    m_btnStatusLabel = new QLabel("Press the physical button!", this);
+    m_btnStatusLabel->setAlignment(Qt::AlignCenter);
+    m_btnStatusLabel->setWordWrap(true);
+    m_btnStatusLabel->setStyleSheet(
         "QLabel { font-size: 15px; font-weight: 600; color: #2d7dff; }"
     );
-    root->addWidget(instrLabel);
+    root->addWidget(m_btnStatusLabel);
+
+    // Create and wire GameEngine
+    m_gameEngine = new GameEngine(this);
+
+    connect(m_gameEngine, &GameEngine::countUpdated,
+            this, &DismissDialog::onButtonGameCountUpdated);
+    connect(m_gameEngine, &GameEngine::countdownUpdated,
+            this, &DismissDialog::onButtonGameCountdownUpdated);
+    connect(m_gameEngine, &GameEngine::gameSuccess,
+            this, &DismissDialog::onButtonGameSuccess);
+    connect(m_gameEngine, &GameEngine::gameFailure,
+            this, &DismissDialog::onButtonGameFailure);
+
+    // Auto-start the game
+    m_gameEngine->startGame();
 }
 
 void DismissDialog::buildCameraUi(const QStringList &alarmTimes)
@@ -589,4 +637,74 @@ void DismissDialog::buildCameraUi(const QStringList &alarmTimes)
                             .arg(static_cast<double>(threshold)));
             });
     m_cameraThread->start();
+}
+
+// ── Button game slots ─────────────────────────────────────────────────────────
+void DismissDialog::onButtonGameCountUpdated(int count)
+{
+    if (m_btnCountLabel)
+        m_btnCountLabel->setText(QString::number(count));
+    if (m_btnTargetLabel && m_gameEngine)
+        m_btnTargetLabel->setText(
+            QString("%1 / %2").arg(count).arg(m_gameEngine->targetCount()));
+    // 버튼 누를 때마다 즉시 상태 라벨 업데이트
+    if (m_btnStatusLabel && m_gameEngine) {
+        const int need = m_gameEngine->targetCount() - count;
+        if (need > 0) {
+            m_btnStatusLabel->setText(QString("Need %1 more press(es)!").arg(need));
+            m_btnStatusLabel->setStyleSheet(
+                "QLabel { font-size: 15px; font-weight: 600; color: #2d7dff; }");
+        } else if (need == 0) {
+            m_btnStatusLabel->setText("Hold on...  Dismissing soon!");
+            m_btnStatusLabel->setStyleSheet(
+                "QLabel { font-size: 15px; font-weight: 700; color: #66cc66; }");
+        }
+    }
+}
+
+void DismissDialog::onButtonGameCountdownUpdated(int secondsLeft)
+{
+    if (m_btnCountdownLabel)
+        m_btnCountdownLabel->setText(QString::number(secondsLeft));
+}
+
+void DismissDialog::onButtonGameSuccess()
+{
+    if (m_btnStatusLabel) {
+        m_btnStatusLabel->setText("SUCCESS!  Alarm dismissed.");
+        m_btnStatusLabel->setStyleSheet(
+            "QLabel { font-size: 18px; font-weight: 700; color: #66cc66; }");
+    }
+    if (m_btnCountdownLabel)
+        m_btnCountdownLabel->setText("✓");
+    QTimer::singleShot(800, this, [this]() { accept(); });
+}
+
+void DismissDialog::onButtonGameFailure()
+{
+    if (!m_gameEngine) return;
+
+    const int count  = m_gameEngine->count();
+    const int target = m_gameEngine->targetCount();
+    const QString reason = (count > target)
+        ? QString("Pressed %1 — too many! (target: %2)").arg(count).arg(target)
+        : QString("Pressed %1 / %2 — too few!").arg(count).arg(target);
+
+    if (m_btnStatusLabel) {
+        m_btnStatusLabel->setText(reason + "\nRestarting...");
+        m_btnStatusLabel->setStyleSheet(
+            "QLabel { font-size: 14px; font-weight: 600; color: #ff6666; }");
+    }
+    if (m_btnCountdownLabel)
+        m_btnCountdownLabel->setText("-");
+
+    QTimer::singleShot(1500, this, [this]() {
+        if (!m_gameEngine) return;
+        m_gameEngine->restartGame();
+        if (m_btnStatusLabel) {
+            m_btnStatusLabel->setText("Press the physical button!");
+            m_btnStatusLabel->setStyleSheet(
+                "QLabel { font-size: 15px; font-weight: 600; color: #2d7dff; }");
+        }
+    });
 }

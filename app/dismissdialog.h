@@ -6,6 +6,8 @@
 #include <QList>
 #include <QStringList>
 
+#include "gameengine.h"
+
 class AlarmCameraThread;
 class QLabel;
 class QPushButton;
@@ -28,7 +30,8 @@ public:
     QString capturedPhotoPath() const;
 
 public slots:
-    void dismiss(); // called by MainWindow when physical button pressed
+    void dismiss(); // called by MainWindow when physical button pressed (Camera mode)
+    void onButtonPressedForGame(); // called by MainWindow for Button game mode
     void captureByButton();
 
 protected:
@@ -38,6 +41,10 @@ protected:
 private slots:
     void onNumberClicked(int number);
     void onColorClicked(int colorIndex);
+    void onButtonGameCountUpdated(int count);
+    void onButtonGameCountdownUpdated(int secondsLeft);
+    void onButtonGameSuccess();
+    void onButtonGameFailure();
 
 private:
     void buildSimpleUi(const QStringList &alarmTimes);
@@ -73,6 +80,13 @@ private:
     QLabel            *m_cameraPreviewLabel;
     bool               m_captureRequested;
     QString            m_capturedPhotoPath;
+
+    // Button game mode
+    GameEngine        *m_gameEngine;
+    QLabel            *m_btnCountLabel;      // current press count
+    QLabel            *m_btnTargetLabel;     // "N / target"
+    QLabel            *m_btnCountdownLabel;  // seconds left
+    QLabel            *m_btnStatusLabel;     // status message
 
     QElapsedTimer      m_actionTimer;
 };

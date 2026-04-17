@@ -10,6 +10,7 @@ SOURCES += \
     alarmcamerathread.cpp \
     buttonwatcher.cpp \
     dismissdialog.cpp \
+    gameengine.cpp \
     main.cpp \
     mainwindow.cpp \
     statdialog.cpp
@@ -19,5 +20,6 @@ HEADERS += \
     alarmcamerathread.h \
     buttonwatcher.h \
     dismissdialog.h \
+    gameengine.h \
     mainwindow.h \
     statdialog.h

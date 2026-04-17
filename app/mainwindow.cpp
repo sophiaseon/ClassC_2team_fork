@@ -508,7 +508,7 @@ void MainWindow::updateCurrentTime()
     DismissDialog dlg(alarmTimes, dlgMode, selectedGameType, this, dlgAlarmId);
     if (dlgMode == DismissDialog::Button) {
         connect(m_buttonWatcher, &ButtonWatcher::buttonPressed,
-                &dlg, &DismissDialog::dismiss);
+                &dlg, &DismissDialog::onButtonPressedForGame);
     } else if (dlgMode == DismissDialog::Camera) {
         connect(m_buttonWatcher, &ButtonWatcher::buttonPressed,
                 &dlg, &DismissDialog::captureByButton);
