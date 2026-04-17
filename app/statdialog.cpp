@@ -11,15 +11,15 @@
 #include <QTextStream>
 #include <QVBoxLayout>
 
-StatDialog::StatDialog(const QString &logFilePath, QWidget *parent)
+StatDialog::StatDialog(const QString &logFilePath, QWidget *parent, const QString &title)
     : QDialog(parent)
 {
-    buildUi(logFilePath);
+    buildUi(logFilePath, title);
 }
 
-void StatDialog::buildUi(const QString &logFilePath)
+void StatDialog::buildUi(const QString &logFilePath, const QString &title)
 {
-    setWindowTitle("Alarm Statistics");
+    setWindowTitle(title.isEmpty() ? "Alarm Statistics" : title);
     setFixedSize(780, 500);
     setStyleSheet("background: #0b0b0b;");
 
@@ -27,7 +27,7 @@ void StatDialog::buildUi(const QString &logFilePath)
     root->setContentsMargins(20, 16, 20, 16);
     root->setSpacing(12);
 
-    QLabel *titleLabel = new QLabel("Alarm Dismiss History", this);
+    QLabel *titleLabel = new QLabel(title.isEmpty() ? "Alarm Dismiss History" : title, this);
     titleLabel->setAlignment(Qt::AlignCenter);
     titleLabel->setStyleSheet(
         "QLabel { font-size: 19px; font-weight: 700; color: white; }"

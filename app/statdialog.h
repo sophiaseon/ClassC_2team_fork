@@ -10,10 +10,11 @@ class StatDialog : public QDialog
     Q_OBJECT
 
 public:
-    explicit StatDialog(const QString &logFilePath, QWidget *parent = nullptr);
+    explicit StatDialog(const QString &logFilePath, QWidget *parent = nullptr,
+                        const QString &title = QString());
 
 private:
-    void buildUi(const QString &logFilePath);
+    void buildUi(const QString &logFilePath, const QString &title);
 };
 
 #endif // STATDIALOG_H

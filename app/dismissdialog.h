@@ -20,7 +20,8 @@ public:
     explicit DismissDialog(const QStringList &alarmTimes,
                            Mode mode,
                            GameType gameType = NumberOrder,
-                           QWidget *parent = nullptr);
+                           QWidget *parent = nullptr,
+                           int alarmId = -1);
     ~DismissDialog() override;
 
     QString capturedPhotoPath() const;
@@ -65,6 +66,7 @@ private:
     int          m_colorInputIndex;
     bool         m_showingSequence;
 
+    int                m_alarmId;
     AlarmCameraThread *m_cameraThread;
     QLabel            *m_cameraStatusLabel;
     QLabel            *m_cameraPreviewLabel;

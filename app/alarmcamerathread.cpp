@@ -5,6 +5,7 @@
 
 #include <errno.h>
 #include <fcntl.h>
+#include <linux/i2c-dev.h>
 #include <linux/videodev2.h>
 #include <string.h>
 #include <sys/ioctl.h>
@@ -18,6 +19,8 @@ AlarmCameraThread::AlarmCameraThread(QObject *parent)
     , m_height(480)
     , m_bufferCount(0)
     , m_running(false)
+    , m_i2cFd(-1)
+    , m_luxThreshold(50.0f)
 {}
 
 AlarmCameraThread::~AlarmCameraThread()
@@ -38,6 +41,12 @@ void AlarmCameraThread::requestCapture(const QString &savePath)
     m_pendingCapturePath = savePath;
 }
 
+void AlarmCameraThread::setLuxThreshold(float lux)
+{
+    QMutexLocker locker(&m_captureLock);
+    m_luxThreshold = lux;
+}
+
 void AlarmCameraThread::run()
 {
     if (initCapture() < 0) {
@@ -50,6 +59,10 @@ void AlarmCameraThread::run()
         return;
     }
 
+    if (!initBH1750()) {
+        qWarning() << "[AlarmCameraThread] BH1750 unavailable; lux check disabled";
+    }
+
     m_running = true;
     while (m_running && !isInterruptionRequested()) {
         if (captureFrame() < 0) break;
@@ -57,6 +70,7 @@ void AlarmCameraThread::run()
 
     stopCapture();
     closeCapture();
+    closeBH1750();
 }
 
 int AlarmCameraThread::initCapture()
@@ -173,16 +187,25 @@ int AlarmCameraThread::captureFrame()
     emit frameReady(frame.copy());
 
     QString savePath;
+    float threshold;
     {
         QMutexLocker locker(&m_captureLock);
         savePath = m_pendingCapturePath;
         if (!savePath.isEmpty()) m_pendingCapturePath.clear();
+        threshold = m_luxThreshold;
     }
 
     if (!savePath.isEmpty()) {
-        QDir().mkpath(QFileInfo(savePath).absolutePath());
-        const bool ok = frame.save(savePath, "JPG", 92);
-        emit captureSaved(savePath, ok, ok ? QString() : QString("Failed to save image"));
+        const float lux = readLux();
+        if (m_i2cFd >= 0 && lux >= 0.0f && lux < threshold) {
+            qWarning() << "[AlarmCameraThread] capture rejected: lux=" << lux
+                       << "< threshold=" << threshold;
+            emit captureRejectedLowLight(lux, threshold);
+        } else {
+            QDir().mkpath(QFileInfo(savePath).absolutePath());
+            const bool ok = frame.save(savePath, "JPG", 92);
+            emit captureSaved(savePath, ok, ok ? QString() : QString("Failed to save image"));
+        }
     }
 
     if (::ioctl(m_fd, VIDIOC_QBUF, &buf) < 0) {
@@ -202,6 +225,73 @@ int AlarmCameraThread::stopCapture()
         return -1;
     }
     return 0;
+}
+
+// ──────────────────────────────────────────────
+// BH1750 조도 센서 (I2C 주소 0x23, /dev/i2c-1)
+// ──────────────────────────────────────────────
+
+bool AlarmCameraThread::initBH1750()
+{
+    m_i2cFd = ::open("/dev/i2c-1", O_RDWR);
+    if (m_i2cFd < 0) {
+        qWarning() << "[AlarmCameraThread] open(/dev/i2c-1) failed, errno=" << errno;
+        return false;
+    }
+
+    if (::ioctl(m_i2cFd, I2C_SLAVE, 0x23) < 0) {
+        qWarning() << "[AlarmCameraThread] I2C_SLAVE ioctl failed, errno=" << errno;
+        ::close(m_i2cFd);
+        m_i2cFd = -1;
+        return false;
+    }
+
+    // Power On
+    unsigned char cmd = 0x01;
+    if (::write(m_i2cFd, &cmd, 1) < 0) {
+        qWarning() << "[AlarmCameraThread] BH1750 power-on write failed";
+        ::close(m_i2cFd);
+        m_i2cFd = -1;
+        return false;
+    }
+
+    // Continuous High Resolution Mode (분해능 1lx, 측정 주기 ~120ms)
+    cmd = 0x10;
+    if (::write(m_i2cFd, &cmd, 1) < 0) {
+        qWarning() << "[AlarmCameraThread] BH1750 mode write failed";
+        ::close(m_i2cFd);
+        m_i2cFd = -1;
+        return false;
+    }
+
+    msleep(200); // 첫 측정 완료 대기
+
+    QMutexLocker locker(&m_captureLock);
+    qDebug() << "[AlarmCameraThread] BH1750 initialized (threshold:" << m_luxThreshold << "lux)";
+    return true;
+}
+
+float AlarmCameraThread::readLux()
+{
+    if (m_i2cFd < 0) return -1.0f;
+
+    unsigned char buf[2] = {0, 0};
+    if (::read(m_i2cFd, buf, 2) != 2) {
+        qWarning() << "[AlarmCameraThread] BH1750 read failed";
+        return -1.0f;
+    }
+
+    // lux = raw_count / 1.2  (BH1750 데이터시트 수식)
+    const float raw = static_cast<float>((buf[0] << 8) | buf[1]);
+    return raw / 1.2f;
+}
+
+void AlarmCameraThread::closeBH1750()
+{
+    if (m_i2cFd >= 0) {
+        ::close(m_i2cFd);
+        m_i2cFd = -1;
+    }
 }
 
 void AlarmCameraThread::closeCapture()

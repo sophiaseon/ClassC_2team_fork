@@ -16,7 +16,8 @@
 DismissDialog::DismissDialog(const QStringList &alarmTimes,
                              Mode mode,
                              GameType gameType,
-                             QWidget *parent)
+                             QWidget *parent,
+                             int alarmId)
     : QDialog(parent)
     , m_mode(mode)
     , m_gameType(gameType)
@@ -32,6 +33,7 @@ DismissDialog::DismissDialog(const QStringList &alarmTimes,
     , m_cameraStatusLabel(nullptr)
     , m_cameraPreviewLabel(nullptr)
     , m_captureRequested(false)
+    , m_alarmId(alarmId)
 {
     for (int i = 0; i < 25; ++i) m_numButtons[i] = nullptr;
     for (int i = 0; i < 4; ++i) m_colorButtons[i] = nullptr;
@@ -464,7 +466,10 @@ void DismissDialog::captureByButton()
         return;
     }
 
-    const QString fileName = QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm") + ".jpg";
+    const QString ts = QDateTime::currentDateTime().toString("yyyyMMdd_HHmmss");
+    const QString fileName = m_alarmId >= 0
+        ? QString("alarm_%1_%2.jpg").arg(m_alarmId).arg(ts)
+        : QString("%1.jpg").arg(ts);
     const QString photoPath = QString("/mnt/nfs/capture/%1").arg(fileName);
 
     m_cameraStatusLabel->setText("Capturing... keep still");
@@ -562,5 +567,14 @@ void DismissDialog::buildCameraUi(const QStringList &alarmTimes)
         if (m_cameraPreviewLabel) m_cameraPreviewLabel->setText("Camera unavailable");
         if (m_cameraStatusLabel) m_cameraStatusLabel->setText(msg + " (button will dismiss without photo)");
     });
+    connect(m_cameraThread, &AlarmCameraThread::captureRejectedLowLight, this,
+            [this](float lux, float threshold) {
+                m_captureRequested = false;
+                if (m_cameraStatusLabel)
+                    m_cameraStatusLabel->setText(
+                        QString("Too dark to capture (%.1f lux, need %.0f). Press button again when brighter.")
+                            .arg(static_cast<double>(lux))
+                            .arg(static_cast<double>(threshold)));
+            });
     m_cameraThread->start();
 }

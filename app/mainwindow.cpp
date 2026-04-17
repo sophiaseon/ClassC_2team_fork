@@ -18,6 +18,7 @@
 #define IOCTL_STOP        _IO(MY_IOCTL_MAGIC, 3)
 #define BUZZER_DEVICE     "/dev/mybuzzer"
 #include <QComboBox>
+#include <QDir>
 #include <QDialog>
 #include <QFile>
 #include <QHBoxLayout>
@@ -385,6 +386,18 @@ void MainWindow::refreshAlarmList()
         rowLayout->addWidget(textWrap, 1);
         rowLayout->addWidget(enableBtn, 0, Qt::AlignVCenter);
 
+        QPushButton *statBtn = new QPushButton("Stat", rowWidget);
+        statBtn->setFixedSize(52, 34);
+        statBtn->setStyleSheet(
+            "QPushButton { font-size: 12px; font-weight: 700; color: white;"
+            "    background: #7a5a3a; border: none; border-radius: 8px; }"
+            "QPushButton:pressed { background: #5f4428; }"
+        );
+        connect(statBtn, &QPushButton::clicked, this, [this, i]() {
+            openAlarmStatDialog(i);
+        });
+        rowLayout->addWidget(statBtn, 0, Qt::AlignVCenter);
+
         QListWidgetItem *item = new QListWidgetItem(m_alarmListWidget);
         item->setSizeHint(QSize(0, 58));
         m_alarmListWidget->addItem(item);
@@ -417,6 +430,7 @@ void MainWindow::updateCurrentTime()
     // Collect due alarm info
     struct TriggeredInfo {
         int index;
+        int alarmId;
         QString alarmTime;
         QString soundFile;
         int dismissMode;
@@ -428,6 +442,7 @@ void MainWindow::updateCurrentTime()
         const AlarmEntry &entry = m_alarms.at(i);
         if (entry.enabled && now >= entry.dateTime) {
             triggered.append({ i,
+                               entry.alarmId,
                                entry.dateTime.toString("yyyy-MM-dd hh:mm"),
                                entry.soundFile,
                                entry.dismissMode,
@@ -476,7 +491,16 @@ void MainWindow::updateCurrentTime()
     else if (needGame) dlgMode = DismissDialog::Game;
 
     // Show appropriate dismiss dialog
-    DismissDialog dlg(alarmTimes, dlgMode, selectedGameType, this);
+    int dlgAlarmId = -1;
+    if (dlgMode == DismissDialog::Camera) {
+        for (const TriggeredInfo &t : triggered) {
+            if (t.dismissMode == AlarmDialog::DismissCamera) {
+                dlgAlarmId = t.alarmId;
+                break;
+            }
+        }
+    }
+    DismissDialog dlg(alarmTimes, dlgMode, selectedGameType, this, dlgAlarmId);
     if (dlgMode == DismissDialog::Button) {
         connect(m_buttonWatcher, &ButtonWatcher::buttonPressed,
                 &dlg, &DismissDialog::dismiss);
@@ -492,6 +516,7 @@ void MainWindow::updateCurrentTime()
     {
         const QString dismissTime =
             QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss");
+        QDir().mkpath("/mnt/nfs/capture");
         QFile logFile("/mnt/nfs/alarm.txt");
         if (logFile.open(QIODevice::Append | QIODevice::Text)) {
             QTextStream out(&logFile);
@@ -504,6 +529,22 @@ void MainWindow::updateCurrentTime()
                 out << "\n";
             }
             logFile.close();
+        }
+        // Write per-alarm log files
+        for (const TriggeredInfo &t : triggered) {
+            const QString alarmLogPath =
+                QString("/mnt/nfs/capture/alarm_%1.txt").arg(t.alarmId);
+            QFile alarmLog(alarmLogPath);
+            if (alarmLog.open(QIODevice::Append | QIODevice::Text)) {
+                QTextStream out(&alarmLog);
+                out << "ALARM: " << t.alarmTime
+                    << " | DISMISSED: " << dismissTime;
+                if (t.dismissMode == AlarmDialog::DismissCamera && !capturedPhotoPath.isEmpty()) {
+                    out << " | PHOTO: " << capturedPhotoPath;
+                }
+                out << "\n";
+                alarmLog.close();
+            }
         }
     }
 
@@ -544,6 +585,7 @@ void MainWindow::openAddDialog()
     if (dlg.exec() != QDialog::Accepted) return;
 
     AlarmEntry entry;
+    entry.alarmId     = m_nextAlarmId++;
     entry.dateTime    = dlg.selectedDateTime();
     entry.enabled     = true;
     entry.soundFile   = dlg.soundFile();
@@ -611,8 +653,6 @@ void MainWindow::setDebugAlarmPlus5Sec()
     if (m_actionTimer.elapsed() < 500) return;
     m_actionTimer.restart();
 
-    const QDateTime target = QDateTime::currentDateTime().addSecs(5);
-
     QDialog dlg(this);
     dlg.setWindowTitle("Debug +5s Alarm");
     dlg.setFixedSize(520, 280);
@@ -639,7 +679,7 @@ void MainWindow::setDebugAlarmPlus5Sec()
     root->setSpacing(10);
 
     QLabel *info = new QLabel(
-        QString("Alarm time is fixed to: %1").arg(target.toString("yyyy-MM-dd hh:mm:ss")),
+        "Alarm will be set to 5 seconds from when you click \"Add +5s Alarm\".",
         &dlg);
     info->setStyleSheet("QLabel { font-size: 14px; color: #dddddd; }");
     info->setWordWrap(true);
@@ -700,7 +740,10 @@ void MainWindow::setDebugAlarmPlus5Sec()
 
     if (dlg.exec() != QDialog::Accepted) return;
 
+    const QDateTime target = QDateTime::currentDateTime().addSecs(5);
+
     AlarmEntry entry;
+    entry.alarmId   = m_nextAlarmId++;
     entry.dateTime  = target;
     entry.enabled = true;
     entry.soundFile = soundCombo->currentData().toString();
@@ -717,5 +760,22 @@ void MainWindow::setDebugAlarmPlus5Sec()
 void MainWindow::openStatDialog()
 {
     StatDialog dlg("/mnt/nfs/alarm.txt", this);
+    dlg.exec();
+}
+
+// ── openAlarmStatDialog ───────────────────────────────────────────────────────
+void MainWindow::openAlarmStatDialog(int alarmIndex)
+{
+    if (alarmIndex < 0 || alarmIndex >= m_alarms.size()) return;
+    const AlarmEntry &e = m_alarms.at(alarmIndex);
+    const QString logPath =
+        QString("/mnt/nfs/capture/alarm_%1.txt").arg(e.alarmId);
+    const QString repeatText = repeatMaskToText(e.repeatMask);
+    const QString timeStr = e.dateTime.toString("hh:mm");
+    const QString title = repeatText.isEmpty()
+        ? QString("Alarm #%1 (%2) Statistics").arg(alarmIndex + 1).arg(timeStr)
+        : QString("Alarm #%1 (%2  [%3]) Statistics")
+              .arg(alarmIndex + 1).arg(timeStr).arg(repeatText);
+    StatDialog dlg(logPath, this, title);
     dlg.exec();
 }

@@ -51,17 +51,17 @@ void ButtonWorker::run()
 
 ButtonWatcher::ButtonWatcher(QObject *parent)
     : QObject(parent)
-    , m_fd(::open("/dev/my_dev0", O_RDONLY))
+    , m_fd(::open("/dev/mydev", O_RDONLY))
     , m_worker(nullptr)
 {
     m_stopPipe[0] = m_stopPipe[1] = -1;
 
     if (m_fd < 0) {
-        qDebug() << "[ButtonWatcher] open(/dev/my_dev0) FAILED, errno=" << errno
+        qDebug() << "[ButtonWatcher] open(/dev/mydev) FAILED, errno=" << errno
                  << " — 커널 모듈이 로드됐는지, mknod로 장치 파일이 생성됐는지 확인하세요";
         return;
     }
-    qDebug() << "[ButtonWatcher] open(/dev/my_dev0) OK, fd=" << m_fd;
+    qDebug() << "[ButtonWatcher] open(/dev/mydev) OK, fd=" << m_fd;
 
     if (::pipe(m_stopPipe) < 0) {
         qDebug() << "[ButtonWatcher] pipe() FAILED, errno=" << errno;

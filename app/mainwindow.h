@@ -33,9 +33,11 @@ private slots:
     void deleteSelectedAlarm();
     void setDebugAlarmPlus5Sec();
     void openStatDialog();
+    void openAlarmStatDialog(int alarmIndex);
 
 private:
     struct AlarmEntry {
+        int       alarmId     = 0;    // unique ID assigned at creation
         QDateTime dateTime;
         bool      enabled     = true;
         QString   soundFile   = "/mnt/nfs/test_contents/test.wav";
@@ -69,6 +71,7 @@ private:
     QProcess         *m_alarmPlayer;
     ButtonWatcher    *m_buttonWatcher;
 
+    int              m_nextAlarmId = 1;
     int              m_buzzerFd = -1;
     QFuture<void>    m_buzzerFuture;
     std::atomic<pthread_t> m_buzzerTid{0};  // thread running the ioctl
