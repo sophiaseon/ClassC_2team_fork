@@ -1,0 +1,276 @@
+From 8dfda4c52d0d4e6c4123d761bf61dc2b2f2ea2c6 Mon Sep 17 00:00:00 2001
+From: lch <chulhan.lee@lge.com>
+Date: Fri, 17 Apr 2026 16:22:59 +0900
+Subject: [PATCH] Newer
+
+---
+ linux-6.12.81/Makefile                        |   4 +-
+ .../arch/arm/boot/dts/broadcom/bcm2837.dtsi   |   2 +-
+ .../arch/arm/boot/dts/broadcom/wt2837.dts     | 178 ++++++++++++++++++
+ .../arch/arm64/boot/dts/broadcom/Makefile     |   1 +
+ .../arch/arm64/boot/dts/broadcom/wt2837.dts   |   2 +
+ linux-6.12.81/copy_images.sh                  |  11 ++
+ 6 files changed, 196 insertions(+), 2 deletions(-)
+ create mode 100644 linux-6.12.81/arch/arm/boot/dts/broadcom/wt2837.dts
+ create mode 100644 linux-6.12.81/arch/arm64/boot/dts/broadcom/wt2837.dts
+ create mode 100755 linux-6.12.81/copy_images.sh
+
+diff --git a/linux-6.12.81/Makefile b/linux-6.12.81/Makefile
+index d7e8226..4e0f527 100644
+--- a/linux-6.12.81/Makefile
++++ b/linux-6.12.81/Makefile
+@@ -378,7 +378,8 @@ include $(srctree)/scripts/subarch.include
+ # Alternatively CROSS_COMPILE can be set in the environment.
+ # Default value for CROSS_COMPILE is not to prefix executables
+ # Note: Some architectures assign CROSS_COMPILE in their arch/*/Makefile
+-ARCH		?= $(SUBARCH)
++ARCH            ?= arm64
++CROSS_COMPILE   ?= aarch64-linux-gnu-
+ 
+ # Architecture as present in compile.h
+ UTS_MACHINE 	:= $(ARCH)
+@@ -1100,6 +1101,7 @@ export	INSTALL_PATH ?= /boot
+ # Like INSTALL_MOD_PATH, it isn't defined in the Makefile, but can be passed as
+ # an argument if needed. Otherwise it defaults to the kernel install path
+ #
++export INSTALL_MOD_PATH = /nfsroot
+ export INSTALL_DTBS_PATH ?= $(INSTALL_PATH)/dtbs/$(KERNELRELEASE)
+ 
+ #
+diff --git a/linux-6.12.81/arch/arm/boot/dts/broadcom/bcm2837.dtsi b/linux-6.12.81/arch/arm/boot/dts/broadcom/bcm2837.dtsi
+index c281697..0efddba 100644
+--- a/linux-6.12.81/arch/arm/boot/dts/broadcom/bcm2837.dtsi
++++ b/linux-6.12.81/arch/arm/boot/dts/broadcom/bcm2837.dtsi
+@@ -4,7 +4,7 @@
+ / {
+ 	compatible = "brcm,bcm2837";
+ 
+-	soc {
++	soc: soc {
+ 		ranges = <0x7e000000 0x3f000000 0x1000000>,
+ 			 <0x40000000 0x40000000 0x00001000>;
+ 		dma-ranges = <0xc0000000 0x00000000 0x3f000000>;
+diff --git a/linux-6.12.81/arch/arm/boot/dts/broadcom/wt2837.dts b/linux-6.12.81/arch/arm/boot/dts/broadcom/wt2837.dts
+new file mode 100644
+index 0000000..f846f8a
+--- /dev/null
++++ b/linux-6.12.81/arch/arm/boot/dts/broadcom/wt2837.dts
+@@ -0,0 +1,178 @@
++// SPDX-License-Identifier: GPL-2.0
++/dts-v1/;
++#include "bcm2837.dtsi"
++#include "bcm2836-rpi.dtsi"
++#include "bcm283x-rpi-led-deprecated.dtsi"
++#include "bcm283x-rpi-smsc9514.dtsi"
++#include "bcm283x-rpi-usb-host.dtsi"
++#include "bcm283x-rpi-wifi-bt.dtsi"
++
++/ {
++	compatible = "raspberrypi,3-model-b", "brcm,bcm2837";
++	model = "Raspberry Pi 3 Model B";
++
++	chosen: chosen {
++		/* 8250 auxiliary UART instead of pl011 */
++		stdout-path = "serial1:115200n8";
++		bootargs = "snd_bcm2835.enable_headphones=1 snd_bcm2835.enable_hdmi=1";
++	};
++
++	memory@0 {
++		device_type = "memory";
++		reg = <0 0x40000000>;
++	};
++};
++
++&bt {
++	shutdown-gpios = <&expgpio 0 GPIO_ACTIVE_HIGH>;
++};
++
++&firmware {
++	expgpio: gpio {
++		compatible = "raspberrypi,firmware-gpio";
++		gpio-controller;
++		#gpio-cells = <2>;
++		gpio-line-names = "BT_ON",
++				  "WL_ON",
++				  "STATUS_LED",
++				  "LAN_RUN",
++				  "HDMI_HPD_N",
++				  "CAM_GPIO0",
++				  "CAM_GPIO1",
++				  "PWR_LOW_N";
++		status = "okay";
++	};
++};
++
++&gpio {
++	/*
++	 * Taken from rpi_SCH_3b_1p2_reduced.pdf and
++	 * the official GPU firmware DT blob.
++	 *
++	 * Legend:
++	 * "FOO" = GPIO line named "FOO" on the schematic
++	 * "FOO_N" = GPIO line named "FOO" on schematic, active low
++	 */
++	gpio-line-names = "ID_SDA",
++			  "ID_SCL",
++			  "SDA1",
++			  "SCL1",
++			  "GPIO_GCLK",
++			  "GPIO5",
++			  "GPIO6",
++			  "SPI_CE1_N",
++			  "SPI_CE0_N",
++			  "SPI_MISO",
++			  "SPI_MOSI",
++			  "SPI_SCLK",
++			  "GPIO12",
++			  "GPIO13",
++			  /* Serial port */
++			  "TXD1",
++			  "RXD1",
++			  "GPIO16",
++			  "GPIO17",
++			  "GPIO18",
++			  "GPIO19",
++			  "GPIO20",
++			  "GPIO21",
++			  "GPIO22",
++			  "GPIO23",
++			  "GPIO24",
++			  "GPIO25",
++			  "GPIO26",
++			  "GPIO27",
++			  "", /* GPIO 28 */
++			  "LAN_RUN_BOOT",
++			  /* Used by BT module */
++			  "CTS0",
++			  "RTS0",
++			  "TXD0",
++			  "RXD0",
++			  /* Used by Wifi */
++			  "SD1_CLK",
++			  "SD1_CMD",
++			  "SD1_DATA0",
++			  "SD1_DATA1",
++			  "SD1_DATA2",
++			  "SD1_DATA3",
++			  "PWM0_OUT",
++			  "PWM1_OUT",
++			  "ETH_CLK",
++			  "WIFI_CLK",
++			  "SDA0",
++			  "SCL0",
++			  "SMPS_SCL",
++			  "SMPS_SDA",
++			  /* Used by SD Card */
++			  "SD_CLK_R",
++			  "SD_CMD_R",
++			  "SD_DATA0_R",
++			  "SD_DATA1_R",
++			  "SD_DATA2_R",
++			  "SD_DATA3_R";
++};
++
++&pwm {
++	pinctrl-names = "default";
++	pinctrl-0 = <&pwm0_gpio40 &pwm1_gpio41>;
++	status = "okay";
++};
++
++&hdmi {
++	hpd-gpios = <&expgpio 4 GPIO_ACTIVE_LOW>;
++	power-domains = <&power RPI_POWER_DOMAIN_HDMI>;
++	status = "okay";
++};
++
++&led_act {
++	gpios = <&expgpio 2 GPIO_ACTIVE_HIGH>;
++};
++
++/* uart0 communicates with the BT module */
++&uart0 {
++	pinctrl-names = "default";
++	pinctrl-0 = <&uart0_gpio32 &gpclk2_gpio43>;
++};
++
++/* uart1 is mapped to the pin header */
++&uart1 {
++	pinctrl-names = "default";
++	pinctrl-0 = <&uart1_gpio14>;
++	status = "okay";
++};
++
++/* SDHOST is used to drive the SD card */
++&sdhost {
++	pinctrl-names = "default";
++	pinctrl-0 = <&sdhost_gpio48>;
++	status = "okay";
++	bus-width = <4>;
++};
++
++&wifi_pwrseq {
++	reset-gpios = <&expgpio 1 GPIO_ACTIVE_LOW>;
++};
++
++&i2c1 {
++    	status = "okay";
++
++    	bh1750@23 {
++        	compatible = "rohm,bh1750";
++        	reg = <0x23>;
++    	};
++};
++
++&soc {
++	my_buzzer@7e20c000{
++		compatible = "my-buzzer";
++		reg = <0x7e20c000 0x28>;
++		clocks = <&clocks BCM2835_CLOCK_PWM>;
++		assigned-clocks = <&clocks BCM2835_CLOCK_PWM>;
++		assigned-clock-rates = <10000000>;
++		pinctrl-names = "default";
++		pinctrl-0 = <&pwm0_gpio12>;
++	};
++
++
++};
+diff --git a/linux-6.12.81/arch/arm64/boot/dts/broadcom/Makefile b/linux-6.12.81/arch/arm64/boot/dts/broadcom/Makefile
+index 92565e9..27f18fe 100644
+--- a/linux-6.12.81/arch/arm64/boot/dts/broadcom/Makefile
++++ b/linux-6.12.81/arch/arm64/boot/dts/broadcom/Makefile
+@@ -4,6 +4,7 @@
+ DTC_FLAGS := -@
+ 
+ dtb-$(CONFIG_ARCH_BCM2835) += bcm2711-rpi-400.dtb \
++			      wt2837.dtb \
+ 			      bcm2711-rpi-4-b.dtb \
+ 			      bcm2711-rpi-cm4-io.dtb \
+ 			      bcm2712-rpi-5-b.dtb \
+diff --git a/linux-6.12.81/arch/arm64/boot/dts/broadcom/wt2837.dts b/linux-6.12.81/arch/arm64/boot/dts/broadcom/wt2837.dts
+new file mode 100644
+index 0000000..d2e358e
+--- /dev/null
++++ b/linux-6.12.81/arch/arm64/boot/dts/broadcom/wt2837.dts
+@@ -0,0 +1,2 @@
++// SPDX-License-Identifier: GPL-2.0
++#include "arm/broadcom/wt2837.dts"
+diff --git a/linux-6.12.81/copy_images.sh b/linux-6.12.81/copy_images.sh
+new file mode 100755
+index 0000000..eb77c59
+--- /dev/null
++++ b/linux-6.12.81/copy_images.sh
+@@ -0,0 +1,11 @@
++#!/bin/sh
++
++if cp arch/arm64/boot/Image /tftpboot
++then
++	echo arch/arm64/boot/Image: copied to /tftpboot
++fi
++
++if cp arch/arm64/boot/dts/broadcom/wt2837.dtb /tftpboot
++then
++	echo arch/arm64/boot/dts/broadcom/wt2837.dtb: copied to /tftpboot
++fi
+-- 
+2.43.0
+
