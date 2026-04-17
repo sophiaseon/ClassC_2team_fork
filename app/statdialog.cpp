@@ -14,6 +14,7 @@
 StatDialog::StatDialog(const QString &logFilePath, QWidget *parent, const QString &title)
     : QDialog(parent)
 {
+    m_actionTimer.start();
     buildUi(logFilePath, title);
 }
 
@@ -143,6 +144,9 @@ void StatDialog::buildUi(const QString &logFilePath, const QString &title)
             photoBtn->setVisible(hasPhoto);
             if (hasPhoto) {
                 connect(photoBtn, &QPushButton::clicked, this, [this, photoPath]() {
+                    if (m_actionTimer.elapsed() < 300) return;
+                    m_actionTimer.restart();
+
                     QDialog *dlg = new QDialog(this);
                     dlg->setAttribute(Qt::WA_DeleteOnClose);
                     dlg->setWindowTitle("Captured Photo");
@@ -225,7 +229,11 @@ void StatDialog::buildUi(const QString &logFilePath, const QString &title)
         "    background: #444444; border: none; border-radius: 10px; }"
         "QPushButton:pressed { background: #333333; }"
     );
-    connect(closeBtn, &QPushButton::clicked, this, &QDialog::accept);
+    connect(closeBtn, &QPushButton::clicked, this, [this]() {
+        if (m_actionTimer.elapsed() < 300) return;
+        m_actionTimer.restart();
+        accept();
+    });
 
     root->addWidget(listWidget, 1);
     root->addWidget(summaryLabel);

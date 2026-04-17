@@ -1,11 +1,10 @@
 #include "alarmcamerathread.h"
-
+//hello
 #include <QDebug>
 #include <QDir>
 
 #include <errno.h>
 #include <fcntl.h>
-#include <linux/i2c-dev.h>
 #include <linux/videodev2.h>
 #include <string.h>
 #include <sys/ioctl.h>
@@ -233,38 +232,12 @@ int AlarmCameraThread::stopCapture()
 
 bool AlarmCameraThread::initBH1750()
 {
-    m_i2cFd = ::open("/dev/i2c-1", O_RDWR);
+    // 드라이버가 open() 시점에 Power On + 고해상도 연속 측정 모드 설정 및 대기를 수행한다.
+    m_i2cFd = ::open("/dev/bh1750", O_RDONLY);
     if (m_i2cFd < 0) {
-        qWarning() << "[AlarmCameraThread] open(/dev/i2c-1) failed, errno=" << errno;
+        qWarning() << "[AlarmCameraThread] open(/dev/bh1750) failed, errno=" << errno;
         return false;
     }
-
-    if (::ioctl(m_i2cFd, I2C_SLAVE, 0x23) < 0) {
-        qWarning() << "[AlarmCameraThread] I2C_SLAVE ioctl failed, errno=" << errno;
-        ::close(m_i2cFd);
-        m_i2cFd = -1;
-        return false;
-    }
-
-    // Power On
-    unsigned char cmd = 0x01;
-    if (::write(m_i2cFd, &cmd, 1) < 0) {
-        qWarning() << "[AlarmCameraThread] BH1750 power-on write failed";
-        ::close(m_i2cFd);
-        m_i2cFd = -1;
-        return false;
-    }
-
-    // Continuous High Resolution Mode (분해능 1lx, 측정 주기 ~120ms)
-    cmd = 0x10;
-    if (::write(m_i2cFd, &cmd, 1) < 0) {
-        qWarning() << "[AlarmCameraThread] BH1750 mode write failed";
-        ::close(m_i2cFd);
-        m_i2cFd = -1;
-        return false;
-    }
-
-    msleep(200); // 첫 측정 완료 대기
 
     QMutexLocker locker(&m_captureLock);
     qDebug() << "[AlarmCameraThread] BH1750 initialized (threshold:" << m_luxThreshold << "lux)";
@@ -275,15 +248,14 @@ float AlarmCameraThread::readLux()
 {
     if (m_i2cFd < 0) return -1.0f;
 
-    unsigned char buf[2] = {0, 0};
-    if (::read(m_i2cFd, buf, 2) != 2) {
+    // 드라이버가 (raw * 10) / 12 로 계산된 lux 값을 unsigned short 로 반환한다.
+    unsigned short lux = 0;
+    if (::read(m_i2cFd, &lux, sizeof(lux)) != static_cast<ssize_t>(sizeof(lux))) {
         qWarning() << "[AlarmCameraThread] BH1750 read failed";
         return -1.0f;
     }
 
-    // lux = raw_count / 1.2  (BH1750 데이터시트 수식)
-    const float raw = static_cast<float>((buf[0] << 8) | buf[1]);
-    return raw / 1.2f;
+    return static_cast<float>(lux);
 }
 
 void AlarmCameraThread::closeBH1750()

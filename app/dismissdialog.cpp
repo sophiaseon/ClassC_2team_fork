@@ -38,6 +38,8 @@ DismissDialog::DismissDialog(const QStringList &alarmTimes,
     for (int i = 0; i < 25; ++i) m_numButtons[i] = nullptr;
     for (int i = 0; i < 4; ++i) m_colorButtons[i] = nullptr;
 
+    m_actionTimer.start();
+
     setWindowTitle("Alarm!");
     setStyleSheet("background: #0b0b0b;");
 
@@ -120,7 +122,11 @@ void DismissDialog::buildSimpleUi(const QStringList &alarmTimes)
         "    background: #2d7dff; border: none; border-radius: 10px; }"
         "QPushButton:pressed { background: #1d5fc7; }"
     );
-    connect(dismissBtn, &QPushButton::clicked, this, &QDialog::accept);
+    connect(dismissBtn, &QPushButton::clicked, this, [this]() {
+        if (m_actionTimer.elapsed() < 300) return;
+        m_actionTimer.restart();
+        accept();
+    });
     root->addWidget(dismissBtn);
 }
 
@@ -209,6 +215,9 @@ void DismissDialog::buildNumberOrderGameUi(const QStringList &alarmTimes)
 // ── Number Order game logic ────────────────────────────────────────────────────
 void DismissDialog::onNumberClicked(int number)
 {
+    if (m_actionTimer.elapsed() < 300) return;
+    m_actionTimer.restart();
+
     QPushButton *btn = m_numButtons[number - 1];
 
     if (number == m_nextExpected) {
@@ -411,6 +420,9 @@ void DismissDialog::setPreviewColor(int colorIndex, bool active)
 
 void DismissDialog::onColorClicked(int colorIndex)
 {
+    if (m_actionTimer.elapsed() < 300) return;
+    m_actionTimer.restart();
+
     if (m_showingSequence) return;
     if (m_colorInputIndex >= m_colorSequence.size()) return;
 

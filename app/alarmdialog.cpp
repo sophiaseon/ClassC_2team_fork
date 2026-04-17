@@ -9,6 +9,7 @@
 #include <QPushButton>
 #include <QStackedWidget>
 #include <QTime>
+#include <QTimer>
 #include <QVBoxLayout>
 #include <QWidget>
 
@@ -119,6 +120,7 @@ AlarmDialog::AlarmDialog(QWidget *parent,
     for (int i = 0; i < 7; ++i) m_weekdayButtons[i] = nullptr;
 
     buildUi();
+    m_adjustTimer.start();
 
     const QDateTime base = initialDt.isValid() ? initialDt : QDateTime::currentDateTime();
     setTimeFromDateTime(base);
@@ -359,30 +361,65 @@ void AlarmDialog::buildUi()
     connect(m_minuteMinusButton, &QPushButton::clicked, this, &AlarmDialog::decreaseMinute);
 
     connect(m_simpleModeBtn, &QPushButton::clicked, this, [this]() {
+        m_simpleModeBtn->setEnabled(false);
+        QTimer::singleShot(500, this, [this]() { m_simpleModeBtn->setEnabled(true); });
         m_dismissMode = DismissSimple;
         refreshModeStyle();
     });
     connect(m_gameModeBtn, &QPushButton::clicked, this, [this]() {
+        m_gameModeBtn->setEnabled(false);
+        QTimer::singleShot(500, this, [this]() { m_gameModeBtn->setEnabled(true); });
         m_dismissMode = DismissGame;
         refreshModeStyle();
     });
     connect(m_buttonModeBtn, &QPushButton::clicked, this, [this]() {
+        m_buttonModeBtn->setEnabled(false);
+        QTimer::singleShot(500, this, [this]() { m_buttonModeBtn->setEnabled(true); });
         m_dismissMode = DismissButton;
         refreshModeStyle();
     });
     connect(m_cameraModeBtn, &QPushButton::clicked, this, [this]() {
+        m_cameraModeBtn->setEnabled(false);
+        QTimer::singleShot(500, this, [this]() { m_cameraModeBtn->setEnabled(true); });
         m_dismissMode = DismissCamera;
         refreshModeStyle();
     });
 
-    connect(m_gameCombo, QOverload<int>::of(&QComboBox::currentIndexChanged), this,
-            [this](int idx) { m_gameType = m_gameCombo->itemData(idx).toInt(); });
+    // m_gameCombo: activated fires only on user popup selection (not programmatic setCurrentIndex)
+    connect(m_gameCombo, QOverload<int>::of(&QComboBox::activated), this, [this](int idx) {
+        m_gameType = m_gameCombo->itemData(idx).toInt();
+        m_gameCombo->setEnabled(false);
+        QTimer::singleShot(300, m_gameCombo, [this]() { if (m_gameCombo) m_gameCombo->setEnabled(true); });
+    });
 
-    connect(m_calendarToggleBtn, &QPushButton::clicked, this, &AlarmDialog::openCalendarDialog);
+    // m_soundCombo: disable for 300ms after selection to block phantom re-opens
+    connect(m_soundCombo, QOverload<int>::of(&QComboBox::activated), this, [this](int) {
+        m_soundCombo->setEnabled(false);
+        QTimer::singleShot(300, m_soundCombo, [this]() { if (m_soundCombo) m_soundCombo->setEnabled(true); });
+    });
 
+    connect(m_calendarToggleBtn, &QPushButton::clicked, this, [this]() {
+        m_calendarToggleBtn->setEnabled(false);
+        QTimer::singleShot(500, this, [this]() { m_calendarToggleBtn->setEnabled(true); });
+        openCalendarDialog();
+    });
+
+    // Per-button debounce lock: each weekday button has its own lock, so phantom clicks
+    // on that button are reverted while other buttons remain fully responsive.
     for (int i = 0; i < 7; ++i) {
-        connect(m_weekdayButtons[i], &QPushButton::toggled, this,
-                [this](bool) { refreshDateSummary(); });
+        m_weekdayLocked[i] = false;
+        connect(m_weekdayButtons[i], &QPushButton::clicked, this, [this, i](bool checked) {
+            if (m_weekdayLocked[i]) {
+                // Revert the toggle Qt already applied
+                m_weekdayButtons[i]->blockSignals(true);
+                m_weekdayButtons[i]->setChecked(!checked);
+                m_weekdayButtons[i]->blockSignals(false);
+                return;
+            }
+            m_weekdayLocked[i] = true;
+            QTimer::singleShot(300, this, [this, i]() { m_weekdayLocked[i] = false; });
+            refreshDateSummary();
+        });
     }
 }
 
@@ -432,18 +469,24 @@ void AlarmDialog::refreshTimeLabels()
 
 void AlarmDialog::increaseAmPm()
 {
+    m_ampmPlusButton->setEnabled(false);
+    QTimer::singleShot(400, this, [this]() { m_ampmPlusButton->setEnabled(true); });
     m_ampm = 1 - m_ampm;
     refreshTimeLabels();
 }
 
 void AlarmDialog::decreaseAmPm()
 {
+    m_ampmMinusButton->setEnabled(false);
+    QTimer::singleShot(400, this, [this]() { m_ampmMinusButton->setEnabled(true); });
     m_ampm = 1 - m_ampm;
     refreshTimeLabels();
 }
 
 void AlarmDialog::increaseHour()
 {
+    m_hourPlusButton->setEnabled(false);
+    QTimer::singleShot(400, this, [this]() { m_hourPlusButton->setEnabled(true); });
     ++m_hour12;
     if (m_hour12 > 12) m_hour12 = 1;
     refreshTimeLabels();
@@ -451,6 +494,8 @@ void AlarmDialog::increaseHour()
 
 void AlarmDialog::decreaseHour()
 {
+    m_hourMinusButton->setEnabled(false);
+    QTimer::singleShot(400, this, [this]() { m_hourMinusButton->setEnabled(true); });
     --m_hour12;
     if (m_hour12 < 1) m_hour12 = 12;
     refreshTimeLabels();
@@ -458,6 +503,8 @@ void AlarmDialog::decreaseHour()
 
 void AlarmDialog::increaseMinute()
 {
+    m_minutePlusButton->setEnabled(false);
+    QTimer::singleShot(400, this, [this]() { m_minutePlusButton->setEnabled(true); });
     ++m_minute;
     if (m_minute > 59) m_minute = 0;
     refreshTimeLabels();
@@ -465,6 +512,8 @@ void AlarmDialog::increaseMinute()
 
 void AlarmDialog::decreaseMinute()
 {
+    m_minuteMinusButton->setEnabled(false);
+    QTimer::singleShot(400, this, [this]() { m_minuteMinusButton->setEnabled(true); });
     --m_minute;
     if (m_minute < 0) m_minute = 59;
     refreshTimeLabels();
@@ -596,17 +645,34 @@ void AlarmDialog::openCalendarDialog()
         dayValue->setText(QString::number(day));
     };
 
-    connect(yearPlus, &QPushButton::clicked, &dlg, [&]() { ++year; if (year > 2099) year = 2000; refresh(); });
-    connect(yearMinus, &QPushButton::clicked, &dlg, [&]() { --year; if (year < 2000) year = 2099; refresh(); });
-    connect(monthPlus, &QPushButton::clicked, &dlg, [&]() { ++month; if (month > 12) month = 1; refresh(); });
-    connect(monthMinus, &QPushButton::clicked, &dlg, [&]() { --month; if (month < 1) month = 12; refresh(); });
+    QElapsedTimer calTimer;
+    calTimer.start();
+
+    connect(yearPlus, &QPushButton::clicked, &dlg, [&]() {
+        if (calTimer.elapsed() < 300) return; calTimer.restart();
+        ++year; if (year > 2099) year = 2000; refresh();
+    });
+    connect(yearMinus, &QPushButton::clicked, &dlg, [&]() {
+        if (calTimer.elapsed() < 300) return; calTimer.restart();
+        --year; if (year < 2000) year = 2099; refresh();
+    });
+    connect(monthPlus, &QPushButton::clicked, &dlg, [&]() {
+        if (calTimer.elapsed() < 300) return; calTimer.restart();
+        ++month; if (month > 12) month = 1; refresh();
+    });
+    connect(monthMinus, &QPushButton::clicked, &dlg, [&]() {
+        if (calTimer.elapsed() < 300) return; calTimer.restart();
+        --month; if (month < 1) month = 12; refresh();
+    });
     connect(dayPlus, &QPushButton::clicked, &dlg, [&]() {
+        if (calTimer.elapsed() < 300) return; calTimer.restart();
         ++day;
         int maxDay = daysInMonth(year, month);
         if (day > maxDay) day = 1;
         refresh();
     });
     connect(dayMinus, &QPushButton::clicked, &dlg, [&]() {
+        if (calTimer.elapsed() < 300) return; calTimer.restart();
         --day;
         int maxDay = daysInMonth(year, month);
         if (day < 1) day = maxDay;

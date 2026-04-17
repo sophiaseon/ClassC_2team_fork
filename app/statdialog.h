@@ -2,6 +2,7 @@
 #define STATDIALOG_H
 
 #include <QDialog>
+#include <QElapsedTimer>
 
 class QListWidget;
 
@@ -15,6 +16,8 @@ public:
 
 private:
     void buildUi(const QString &logFilePath, const QString &title);
+
+    QElapsedTimer m_actionTimer;
 };
 
 #endif // STATDIALOG_H

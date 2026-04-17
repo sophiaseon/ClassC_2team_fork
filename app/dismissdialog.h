@@ -2,6 +2,7 @@
 #define DISMISSDIALOG_H
 
 #include <QDialog>
+#include <QElapsedTimer>
 #include <QList>
 #include <QStringList>
 
@@ -72,6 +73,8 @@ private:
     QLabel            *m_cameraPreviewLabel;
     bool               m_captureRequested;
     QString            m_capturedPhotoPath;
+
+    QElapsedTimer      m_actionTimer;
 };
 
 #endif // DISMISSDIALOG_H

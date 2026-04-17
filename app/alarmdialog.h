@@ -4,6 +4,7 @@
 #include <QDate>
 #include <QDateTime>
 #include <QDialog>
+#include <QElapsedTimer>
 
 class QComboBox;
 class QLabel;
@@ -92,9 +93,12 @@ private:
     QPushButton *m_minuteMinusButton;
 
     QPushButton *m_weekdayButtons[7]; // 0=Sun ... 6=Sat
+    bool         m_weekdayLocked[7];  // per-button debounce lock
 
     QLabel *m_dateSummaryLabel;
     QPushButton *m_calendarToggleBtn;
+
+    QElapsedTimer m_adjustTimer;
 
     QComboBox *m_soundCombo;
     QComboBox *m_gameCombo;

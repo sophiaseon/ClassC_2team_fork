@@ -19,6 +19,7 @@
 #define BUZZER_DEVICE     "/dev/mybuzzer"
 #include <QComboBox>
 #include <QDir>
+#include <QPointer>
 #include <QDialog>
 #include <QFile>
 #include <QHBoxLayout>
@@ -393,7 +394,11 @@ void MainWindow::refreshAlarmList()
             "    background: #7a5a3a; border: none; border-radius: 8px; }"
             "QPushButton:pressed { background: #5f4428; }"
         );
-        connect(statBtn, &QPushButton::clicked, this, [this, i]() {
+        connect(statBtn, &QPushButton::clicked, this, [this, i, statBtn]() {
+            QPointer<QPushButton> safe = statBtn;
+            if (!safe) return;
+            safe->setEnabled(false);
+            QTimer::singleShot(500, this, [safe]() { if (safe) safe->setEnabled(true); });
             openAlarmStatDialog(i);
         });
         rowLayout->addWidget(statBtn, 0, Qt::AlignVCenter);
@@ -578,8 +583,8 @@ void MainWindow::updateCurrentTime()
 // ── openAddDialog ─────────────────────────────────────────────────────────────
 void MainWindow::openAddDialog()
 {
-    if (m_actionTimer.elapsed() < 500) return;
-    m_actionTimer.restart();
+    m_addButton->setEnabled(false);
+    QTimer::singleShot(500, this, [this]() { m_addButton->setEnabled(true); });
 
     AlarmDialog dlg(this);
     if (dlg.exec() != QDialog::Accepted) return;
@@ -611,8 +616,8 @@ void MainWindow::openAddDialog()
 // ── openEditDialog ────────────────────────────────────────────────────────────
 void MainWindow::openEditDialog()
 {
-    if (m_actionTimer.elapsed() < 500) return;
-    m_actionTimer.restart();
+    m_editButton->setEnabled(false);
+    QTimer::singleShot(500, this, [this]() { m_editButton->setEnabled(true); });
 
     const int row = m_alarmListWidget->currentRow();
     if (row < 0 || row >= m_alarms.size()) {
@@ -641,6 +646,9 @@ void MainWindow::openEditDialog()
 // ── deleteSelectedAlarm ───────────────────────────────────────────────────────
 void MainWindow::deleteSelectedAlarm()
 {
+    m_deleteButton->setEnabled(false);
+    QTimer::singleShot(500, this, [this]() { m_deleteButton->setEnabled(true); });
+
     const int row = m_alarmListWidget->currentRow();
     if (row < 0 || row >= m_alarms.size()) return;
     m_alarms.removeAt(row);
@@ -650,8 +658,8 @@ void MainWindow::deleteSelectedAlarm()
 // ── setDebugAlarmPlus5Sec ─────────────────────────────────────────────────────
 void MainWindow::setDebugAlarmPlus5Sec()
 {
-    if (m_actionTimer.elapsed() < 500) return;
-    m_actionTimer.restart();
+    m_debugPlus5SecButton->setEnabled(false);
+    QTimer::singleShot(500, this, [this]() { m_debugPlus5SecButton->setEnabled(true); });
 
     QDialog dlg(this);
     dlg.setWindowTitle("Debug +5s Alarm");
@@ -716,8 +724,20 @@ void MainWindow::setDebugAlarmPlus5Sec()
         const bool showGame = (mode == AlarmDialog::DismissGame);
         gameCombo->setVisible(showGame);
     };
-    connect(modeCombo, QOverload<int>::of(&QComboBox::currentIndexChanged), &dlg,
-            [refreshGameVisibility](int) { refreshGameVisibility(); });
+    connect(soundCombo, QOverload<int>::of(&QComboBox::activated), &dlg, [soundCombo](int) {
+        soundCombo->setEnabled(false);
+        QTimer::singleShot(300, soundCombo, [soundCombo]() { soundCombo->setEnabled(true); });
+    });
+    connect(modeCombo, QOverload<int>::of(&QComboBox::activated), &dlg,
+            [modeCombo, gameCombo, refreshGameVisibility](int) {
+                refreshGameVisibility();
+                modeCombo->setEnabled(false);
+                QTimer::singleShot(300, modeCombo, [modeCombo]() { modeCombo->setEnabled(true); });
+            });
+    connect(gameCombo, QOverload<int>::of(&QComboBox::activated), &dlg, [gameCombo](int) {
+        gameCombo->setEnabled(false);
+        QTimer::singleShot(300, gameCombo, [gameCombo]() { gameCombo->setEnabled(true); });
+    });
     refreshGameVisibility();
 
     root->addStretch();
@@ -759,6 +779,9 @@ void MainWindow::setDebugAlarmPlus5Sec()
 // ── openStatDialog ────────────────────────────────────────────────────────────
 void MainWindow::openStatDialog()
 {
+    m_statButton->setEnabled(false);
+    QTimer::singleShot(500, this, [this]() { m_statButton->setEnabled(true); });
+
     StatDialog dlg("/mnt/nfs/alarm.txt", this);
     dlg.exec();
 }
