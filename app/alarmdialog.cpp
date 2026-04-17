@@ -33,7 +33,7 @@ QLabel *createFieldNameLabel(const QString &text, QWidget *parent)
         "QLabel {"
         "    font-size: 15px;"
         "    font-weight: 600;"
-        "    color: #dddddd;"
+        "    color: #64748b;"
         "}"
     );
     return label;
@@ -48,9 +48,9 @@ QLabel *createValueLabel(QWidget *parent)
         "QLabel {"
         "    font-size: 32px;"
         "    font-weight: 700;"
-        "    color: white;"
-        "    background: #202020;"
-        "    border: 1px solid #4a4a4a;"
+        "    color: #0f172a;"
+        "    background: #ffffff;"
+        "    border: 1px solid #dbe3ef;"
         "    border-radius: 12px;"
         "}"
     );
@@ -65,13 +65,13 @@ QPushButton *createAdjustButton(const QString &text, QWidget *parent)
         "QPushButton {"
         "    font-size: 32px;"
         "    font-weight: 700;"
-        "    color: white;"
-        "    background: #2c2c2c;"
-        "    border: 1px solid #4a4a4a;"
+        "    color: #334155;"
+        "    background: #eef2ff;"
+        "    border: 1px solid #dbeafe;"
         "    border-radius: 14px;"
         "}"
         "QPushButton:pressed {"
-        "    background: #4a4a4a;"
+        "    background: #dbeafe;"
         "}"
     );
     return button;
@@ -171,7 +171,10 @@ void AlarmDialog::buildUi()
 {
     setWindowTitle(m_editIndex < 0 ? "Add Alarm" : "Edit Alarm");
     setFixedSize(900, 550);
-    setStyleSheet("background: #0b0b0b;");
+    setStyleSheet(
+        "QDialog { background: #f8fafc; }"
+        "QWidget { color: #0f172a; }"
+    );
 
     QVBoxLayout *root = new QVBoxLayout(this);
     root->setContentsMargins(20, 8, 20, 8);
@@ -179,7 +182,7 @@ void AlarmDialog::buildUi()
 
     QLabel *titleLabel = new QLabel(m_editIndex < 0 ? "Add Alarm" : "Edit Alarm", this);
     titleLabel->setAlignment(Qt::AlignCenter);
-    titleLabel->setStyleSheet("QLabel { font-size: 20px; font-weight: 700; color: white; }");
+    titleLabel->setStyleSheet("QLabel { font-size: 24px; font-weight: 800; color: #0f172a; }");
     root->addWidget(titleLabel);
 
     QGridLayout *timeGrid = new QGridLayout();
@@ -216,16 +219,16 @@ void AlarmDialog::buildUi()
     calendarBtnLayout->setContentsMargins(0, 10, 0, 0); // Move weekday and below sections downward
     calendarBtnLayout->setSpacing(6);
 
-    m_calendarToggleBtn = new QPushButton("Calendar", this);
+    m_calendarToggleBtn = new QPushButton("Pick Date", this);
     m_calendarToggleBtn->setFixedHeight(50);
     m_calendarToggleBtn->setStyleSheet(
-        "QPushButton { font-size: 16px; font-weight: 700; color: white;"
-        "    background: #444444; border: none; border-radius: 10px; padding: 0 16px; }"
-        "QPushButton:pressed { background: #333333; }"
+        "QPushButton { font-size: 16px; font-weight: 700; color: #334155;"
+        "    background: #e2e8f0; border: none; border-radius: 12px; padding: 0 16px; }"
+        "QPushButton:pressed { background: #cbd5e1; }"
     );
 
     m_dateSummaryLabel = new QLabel(this);
-    m_dateSummaryLabel->setStyleSheet("QLabel { font-size: 14px; color: #9e9e9e; }");
+    m_dateSummaryLabel->setStyleSheet("QLabel { font-size: 14px; color: #64748b; }");
     m_dateSummaryLabel->setAlignment(Qt::AlignCenter);
 
     calendarBtnLayout->addStretch();
@@ -248,9 +251,9 @@ void AlarmDialog::buildUi()
         btn->setCheckable(true);
         btn->setFixedHeight(40);
         btn->setStyleSheet(
-            "QPushButton { font-size: 14px; font-weight: 700; color: #9e9e9e;"
-            "    background: #242424; border: 1px solid #4a4a4a; border-radius: 9px; }"
-            "QPushButton:checked { color: white; background: #2d7dff; border: none; }"
+            "QPushButton { font-size: 14px; font-weight: 700; color: #64748b;"
+            "    background: #ffffff; border: 1px solid #dbe3ef; border-radius: 10px; }"
+            "QPushButton:checked { color: white; background: #3182f6; border: none; }"
         );
         m_weekdayButtons[i] = btn;
         repeatLayout->addWidget(btn, 1);
@@ -266,13 +269,13 @@ void AlarmDialog::buildUi()
         cb->setFixedHeight(h);
         cb->setStyleSheet(
             "QComboBox {"
-            "    font-size: 15px; color: white; background: #202020;"
-            "    border: 1px solid #4a4a4a; border-radius: 8px; padding: 3px 10px;"
+            "    font-size: 15px; color: #0f172a; background: #ffffff;"
+            "    border: 1px solid #dbe3ef; border-radius: 10px; padding: 3px 10px;"
             "}"
             "QComboBox::drop-down { border: none; width: 24px; }"
             "QComboBox QAbstractItemView {"
-            "    background: #202020; color: white;"
-            "    selection-background-color: #2d7dff;"
+            "    background: #ffffff; color: #0f172a;"
+            "    selection-background-color: #dbeafe;"
             "}"
         );
         return cb;
@@ -280,8 +283,8 @@ void AlarmDialog::buildUi()
 
     QVBoxLayout *soundLayout = new QVBoxLayout();
     soundLayout->setSpacing(6);
-    QLabel *soundLabel = new QLabel("Alarm Sound", this);
-    soundLabel->setStyleSheet("QLabel { font-size: 14px; font-weight: 600; color: #aaaaaa; }");
+    QLabel *soundLabel = new QLabel("Sound", this);
+    soundLabel->setStyleSheet("QLabel { font-size: 14px; font-weight: 700; color: #334155; }");
     m_soundCombo = makeCombo();
     m_soundCombo->addItem("test.wav",        "/mnt/nfs/test_contents/test.wav");
     m_soundCombo->addItem("test2.wav",       "/mnt/nfs/test_contents/test2.wav");
@@ -292,7 +295,7 @@ void AlarmDialog::buildUi()
     QVBoxLayout *modeLayout = new QVBoxLayout();
     modeLayout->setSpacing(6);
     QLabel *modeLabel = new QLabel("Dismiss Mode", this);
-    modeLabel->setStyleSheet("QLabel { font-size: 14px; font-weight: 600; color: #aaaaaa; }");
+    modeLabel->setStyleSheet("QLabel { font-size: 14px; font-weight: 700; color: #334155; }");
     QHBoxLayout *modeBtnRow = new QHBoxLayout();
     modeBtnRow->setSpacing(10);
 
@@ -332,19 +335,19 @@ void AlarmDialog::buildUi()
     root->addStretch();
 
     QHBoxLayout *bottomBtns = new QHBoxLayout();
-    QPushButton *confirmBtn = new QPushButton(m_editIndex < 0 ? "Add Alarm" : "Save", this);
+    QPushButton *confirmBtn = new QPushButton(m_editIndex < 0 ? "Add" : "Save", this);
     QPushButton *cancelBtn = new QPushButton("Cancel", this);
     confirmBtn->setFixedHeight(42);
     cancelBtn->setFixedHeight(42);
     confirmBtn->setStyleSheet(
         "QPushButton { font-size: 17px; font-weight: 700; color: white;"
-        "    background: #2d7dff; border: none; border-radius: 10px; }"
-        "QPushButton:pressed { background: #1d5fc7; }"
+        "    background: #3182f6; border: none; border-radius: 12px; }"
+        "QPushButton:pressed { background: #2272e6; }"
     );
     cancelBtn->setStyleSheet(
-        "QPushButton { font-size: 17px; font-weight: 700; color: white;"
-        "    background: #444444; border: none; border-radius: 10px; }"
-        "QPushButton:pressed { background: #333333; }"
+        "QPushButton { font-size: 17px; font-weight: 700; color: #334155;"
+        "    background: #e2e8f0; border: none; border-radius: 12px; }"
+        "QPushButton:pressed { background: #cbd5e1; }"
     );
     bottomBtns->addWidget(confirmBtn, 1);
     bottomBtns->addWidget(cancelBtn, 1);
@@ -427,10 +430,10 @@ void AlarmDialog::refreshModeStyle()
 {
     const QString on =
         "QPushButton { font-size: 15px; font-weight: 700; color: white;"
-        "    background: #2d7dff; border: none; border-radius: 8px; }";
+        "    background: #3182f6; border: none; border-radius: 10px; }";
     const QString off =
-        "QPushButton { font-size: 15px; font-weight: 700; color: #888888;"
-        "    background: #2c2c2c; border: 1px solid #4a4a4a; border-radius: 8px; }";
+        "QPushButton { font-size: 15px; font-weight: 700; color: #64748b;"
+        "    background: #ffffff; border: 1px solid #dbe3ef; border-radius: 10px; }";
 
     m_simpleModeBtn->setStyleSheet(m_dismissMode == DismissSimple ? on : off);
     m_gameModeBtn->setStyleSheet(m_dismissMode == DismissGame ? on : off);
@@ -553,7 +556,7 @@ void AlarmDialog::refreshDateSummary()
 {
     const int mask = repeatMaskFromButtons();
     if (mask != 0) {
-        m_dateSummaryLabel->setText("Weekly repeat enabled");
+        m_dateSummaryLabel->setText("Repeats weekly");
         return;
     }
 
@@ -598,7 +601,7 @@ void AlarmDialog::openCalendarDialog()
     QDialog dlg(this);
     dlg.setWindowTitle("Select Date");
     dlg.setFixedSize(620, 420);
-    dlg.setStyleSheet("background: #0b0b0b;");
+    dlg.setStyleSheet("QDialog { background: #f8fafc; }");
 
     int year = m_specificDate.year();
     int month = m_specificDate.month();
@@ -610,7 +613,7 @@ void AlarmDialog::openCalendarDialog()
 
     QLabel *title = new QLabel("Date Selector", &dlg);
     title->setAlignment(Qt::AlignCenter);
-    title->setStyleSheet("QLabel { font-size: 18px; font-weight: 700; color: white; }");
+    title->setStyleSheet("QLabel { font-size: 20px; font-weight: 800; color: #0f172a; }");
     root->addWidget(title);
 
     QGridLayout *grid = new QGridLayout();
@@ -701,18 +704,18 @@ void AlarmDialog::openCalendarDialog()
     cancelBtn->setFixedHeight(42);
     setBtn->setStyleSheet(
         "QPushButton { font-size: 14px; font-weight: 700; color: white;"
-        "    background: #2d7dff; border: none; border-radius: 8px; }"
-        "QPushButton:pressed { background: #1d5fc7; }"
+        "    background: #3182f6; border: none; border-radius: 10px; }"
+        "QPushButton:pressed { background: #2272e6; }"
     );
     autoBtn->setStyleSheet(
-        "QPushButton { font-size: 14px; font-weight: 700; color: white;"
-        "    background: #555555; border: none; border-radius: 8px; }"
-        "QPushButton:pressed { background: #3d3d3d; }"
+        "QPushButton { font-size: 14px; font-weight: 700; color: #334155;"
+        "    background: #e2e8f0; border: none; border-radius: 10px; }"
+        "QPushButton:pressed { background: #cbd5e1; }"
     );
     cancelBtn->setStyleSheet(
-        "QPushButton { font-size: 14px; font-weight: 700; color: white;"
-        "    background: #333333; border: none; border-radius: 8px; }"
-        "QPushButton:pressed { background: #252525; }"
+        "QPushButton { font-size: 14px; font-weight: 700; color: #334155;"
+        "    background: #eef2f7; border: none; border-radius: 10px; }"
+        "QPushButton:pressed { background: #e2e8f0; }"
     );
 
     connect(setBtn, &QPushButton::clicked, &dlg, [&]() {

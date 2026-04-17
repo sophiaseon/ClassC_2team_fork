@@ -22,22 +22,21 @@ void StatDialog::buildUi(const QString &logFilePath, const QString &title)
 {
     setWindowTitle(title.isEmpty() ? "Alarm Statistics" : title);
     setFixedSize(780, 500);
-    setStyleSheet("background: #0b0b0b;");
+    setStyleSheet("QDialog { background: #f8fafc; }");
 
     QVBoxLayout *root = new QVBoxLayout(this);
     root->setContentsMargins(20, 16, 20, 16);
     root->setSpacing(12);
 
-    QLabel *titleLabel = new QLabel(title.isEmpty() ? "Alarm Dismiss History" : title, this);
+    QLabel *titleLabel = new QLabel(title.isEmpty() ? "Dismiss History" : title, this);
     titleLabel->setAlignment(Qt::AlignCenter);
     titleLabel->setStyleSheet(
-        "QLabel { font-size: 19px; font-weight: 700; color: white; }"
+        "QLabel { font-size: 22px; font-weight: 800; color: #0f172a; }"
     );
     root->addWidget(titleLabel);
 
-    // Header row
     QWidget *headerWidget = new QWidget(this);
-    headerWidget->setStyleSheet("background: #1e1e1e; border-radius: 6px;");
+    headerWidget->setStyleSheet("background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px;");
     QHBoxLayout *headerLayout = new QHBoxLayout(headerWidget);
     headerLayout->setContentsMargins(14, 8, 14, 8);
     headerLayout->setSpacing(0);
@@ -45,17 +44,17 @@ void StatDialog::buildUi(const QString &logFilePath, const QString &title)
     auto makeHeaderLabel = [headerWidget](const QString &text, int stretch) -> QLabel * {
         QLabel *lbl = new QLabel(text, headerWidget);
         lbl->setStyleSheet(
-            "QLabel { font-size: 13px; font-weight: 700; color: #aaaaaa; background: transparent; }"
+            "QLabel { font-size: 13px; font-weight: 700; color: #64748b; background: transparent; }"
         );
         lbl->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
         Q_UNUSED(stretch);
         return lbl;
     };
 
-    QLabel *h1 = makeHeaderLabel("#",          1);
-    QLabel *h2 = makeHeaderLabel("Alarm Time", 5);
-    QLabel *h3 = makeHeaderLabel("Dismissed At", 5);
-    QLabel *h4 = makeHeaderLabel("Photo", 2);
+    QLabel *h1 = makeHeaderLabel("#",         1);
+    QLabel *h2 = makeHeaderLabel("Time",      5);
+    QLabel *h3 = makeHeaderLabel("Dismissed", 5);
+    QLabel *h4 = makeHeaderLabel("Photo",     2);
     h1->setFixedWidth(32);
     h4->setAlignment(Qt::AlignCenter);
     h4->setFixedWidth(120);
@@ -66,23 +65,18 @@ void StatDialog::buildUi(const QString &logFilePath, const QString &title)
     headerLayout->addWidget(h4);
     root->addWidget(headerWidget);
 
-    // List
     QListWidget *listWidget = new QListWidget(this);
     listWidget->setStyleSheet(
         "QListWidget {"
-        "    background: #141414; border: 1px solid #3a3a3a;"
+        "    background: transparent; border: none;"
         "    border-radius: 8px; outline: none; padding: 4px;"
         "}"
-        "QListWidget::item { padding: 2px 6px; border-radius: 4px; }"
-        "QListWidget::item:alternate { background: #1a1a1a; }"
-        "QListWidget::item:selected { background: #2d7dff; }"
+        "QListWidget::item { margin: 4px 0; }"
+        "QListWidget::item:selected { background: #dbeafe; border-radius: 12px; }"
     );
-    listWidget->setAlternatingRowColors(true);
+    listWidget->setAlternatingRowColors(false);
     listWidget->setSelectionMode(QAbstractItemView::NoSelection);
 
-    // Parse log file
-    // Each line format:
-    //   ALARM: yyyy-MM-dd hh:mm | DISMISSED: yyyy-MM-dd hh:mm:ss | PHOTO: /path/file.jpg
     int count = 0;
     QFile file(logFilePath);
     if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
@@ -110,11 +104,10 @@ void StatDialog::buildUi(const QString &logFilePath, const QString &title)
                 alarmTime = line;
             }
 
-            // Build a custom widget row
             QWidget *rowWidget = new QWidget();
-            rowWidget->setStyleSheet("background: transparent;");
+            rowWidget->setStyleSheet("QWidget { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; }");
             QHBoxLayout *rowLayout = new QHBoxLayout(rowWidget);
-            rowLayout->setContentsMargins(4, 4, 4, 4);
+            rowLayout->setContentsMargins(10, 8, 10, 8);
             rowLayout->setSpacing(0);
 
             auto cell = [rowWidget](const QString &text, const QString &color = "#ffffff") -> QLabel * {
@@ -126,18 +119,18 @@ void StatDialog::buildUi(const QString &logFilePath, const QString &title)
                 return l;
             };
 
-            QLabel *numLbl     = cell(QString::number(count), "#888888");
+            QLabel *numLbl     = cell(QString::number(count), "#94a3b8");
             numLbl->setFixedWidth(32);
-            QLabel *alarmLbl   = cell(alarmTime,   "#ffffff");
+            QLabel *alarmLbl   = cell(alarmTime,   "#0f172a");
             QLabel *dismissLbl = cell(dismissTime.isEmpty() ? "(no record)" : dismissTime,
-                                      dismissTime.isEmpty() ? "#666666" : "#66cc66");
+                                      dismissTime.isEmpty() ? "#94a3b8" : "#2563eb");
 
             QPushButton *photoBtn = new QPushButton("View", rowWidget);
             photoBtn->setFixedSize(96, 30);
             photoBtn->setStyleSheet(
-                "QPushButton { font-size: 13px; font-weight: 700; color: white;"
-                "    background: #3a5f9a; border: none; border-radius: 7px; }"
-                "QPushButton:pressed { background: #2a4977; }"
+                "QPushButton { font-size: 13px; font-weight: 700; color: #334155;"
+                "    background: #e2e8f0; border: none; border-radius: 9px; }"
+                "QPushButton:pressed { background: #cbd5e1; }"
             );
 
             const bool hasPhoto = !photoPath.isEmpty() && QFile::exists(photoPath);
@@ -151,19 +144,19 @@ void StatDialog::buildUi(const QString &logFilePath, const QString &title)
                     dlg->setAttribute(Qt::WA_DeleteOnClose);
                     dlg->setWindowTitle("Captured Photo");
                     dlg->setFixedSize(760, 560);
-                    dlg->setStyleSheet("background: #0b0b0b;");
+                    dlg->setStyleSheet("QDialog { background: #f8fafc; }");
 
                     QVBoxLayout *vl = new QVBoxLayout(dlg);
                     vl->setContentsMargins(12, 12, 12, 12);
 
                     QLabel *img = new QLabel(dlg);
                     img->setAlignment(Qt::AlignCenter);
-                    img->setStyleSheet("QLabel { background: #141414; border: 1px solid #3a3a3a; }");
+                    img->setStyleSheet("QLabel { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; color: #64748b; }");
 
                     QImageReader reader(photoPath);
                     const QImage image = reader.read();
                     if (image.isNull()) {
-                        img->setText("Failed to load photo");
+                        img->setText("Photo failed to load");
                     } else {
                         img->setPixmap(QPixmap::fromImage(image).scaled(
                             720, 500, Qt::KeepAspectRatio, Qt::SmoothTransformation));
@@ -173,9 +166,9 @@ void StatDialog::buildUi(const QString &logFilePath, const QString &title)
                     QPushButton *closeBtn = new QPushButton("Close", dlg);
                     closeBtn->setFixedHeight(38);
                     closeBtn->setStyleSheet(
-                        "QPushButton { font-size: 15px; font-weight: 700; color: white;"
-                        "    background: #3f3f3f; border: none; border-radius: 8px; }"
-                        "QPushButton:pressed { background: #2e2e2e; }"
+                        "QPushButton { font-size: 15px; font-weight: 700; color: #334155;"
+                        "    background: #e2e8f0; border: none; border-radius: 10px; }"
+                        "QPushButton:pressed { background: #cbd5e1; }"
                     );
                     connect(closeBtn, &QPushButton::clicked, dlg, &QDialog::accept);
                     vl->addWidget(closeBtn);
@@ -200,7 +193,7 @@ void StatDialog::buildUi(const QString &logFilePath, const QString &title)
             rowLayout->addWidget(photoCell);
 
             QListWidgetItem *item = new QListWidgetItem();
-            item->setSizeHint(QSize(0, 52));
+            item->setSizeHint(QSize(0, 62));
             listWidget->addItem(item);
             listWidget->setItemWidget(item, rowWidget);
         }
@@ -209,25 +202,23 @@ void StatDialog::buildUi(const QString &logFilePath, const QString &title)
 
     if (count == 0) {
         QListWidgetItem *empty = new QListWidgetItem("No records found.", listWidget);
-        empty->setForeground(QColor("#666666"));
+        empty->setForeground(QColor("#94a3b8"));
         empty->setTextAlignment(Qt::AlignCenter);
     }
 
-    // Summary label
     QLabel *summaryLabel = new QLabel(
         count > 0 ? QString("Total %1 record(s)").arg(count) : "Log file is empty or not found.",
         this
     );
     summaryLabel->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
-    summaryLabel->setStyleSheet("QLabel { font-size: 12px; color: #888888; }");
+    summaryLabel->setStyleSheet("QLabel { font-size: 12px; color: #64748b; }");
 
-    // Close button
     QPushButton *closeBtn = new QPushButton("Close", this);
     closeBtn->setFixedHeight(44);
     closeBtn->setStyleSheet(
-        "QPushButton { font-size: 16px; font-weight: 700; color: white;"
-        "    background: #444444; border: none; border-radius: 10px; }"
-        "QPushButton:pressed { background: #333333; }"
+        "QPushButton { font-size: 16px; font-weight: 700; color: #334155;"
+        "    background: #e2e8f0; border: none; border-radius: 12px; }"
+        "QPushButton:pressed { background: #cbd5e1; }"
     );
     connect(closeBtn, &QPushButton::clicked, this, [this]() {
         if (m_actionTimer.elapsed() < 300) return;

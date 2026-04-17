@@ -10,7 +10,7 @@
 #include <unistd.h>
 #include <sys/ioctl.h>
 #include <pthread.h>
-#include <QtConcurrent>
+#include <QtConcurrent/QtConcurrentRun>
 
 // Buzzer ioctl constants (matches my_ioctl.h)
 #define MY_IOCTL_MAGIC    'M'
@@ -171,106 +171,114 @@ void MainWindow::stopBuzzer()
 void MainWindow::buildUi()
 {
     setWindowTitle("Alarm Clock");
-    setFixedSize(900, 600);
+    setMinimumSize(960, 640);
+    resize(1024, 680);
 
     m_centralWidget = new QWidget(this);
-    m_centralWidget->setStyleSheet("background: #0b0b0b;");
+    m_centralWidget->setStyleSheet(
+        "QWidget { background: #f5f7fb; color: #111827; }"
+        "QLabel#HeaderTitle { font-size: 30px; font-weight: 800; color: #0f172a; }"
+        "QLabel#HeaderSubTitle { font-size: 14px; color: #6b7280; }"
+        "QLabel#TimeBadge {"
+        "    font-size: 26px; font-weight: 800; color: #0f172a;"
+        "    background: #ffffff; border: 1px solid #e5e7eb;"
+        "    border-radius: 18px; padding: 10px 18px;"
+        "}"
+        "QLabel#CountLabel { font-size: 14px; font-weight: 600; color: #64748b; }"
+        "QPushButton#PrimaryButton {"
+        "    font-size: 16px; font-weight: 700; color: #ffffff;"
+        "    background: #3182f6; border: none; border-radius: 14px; padding: 0 20px;"
+        "}"
+        "QPushButton#PrimaryButton:pressed { background: #2272e6; }"
+        "QPushButton#SecondaryButton {"
+        "    font-size: 15px; font-weight: 700; color: #334155;"
+        "    background: #e2e8f0; border: none; border-radius: 14px; padding: 0 18px;"
+        "}"
+        "QPushButton#SecondaryButton:pressed { background: #cbd5e1; }"
+        "QPushButton#UtilityButton {"
+        "    font-size: 13px; font-weight: 700; color: #475569;"
+        "    background: #eef2ff; border: 1px solid #dbeafe; border-radius: 11px; padding: 0 14px;"
+        "}"
+        "QPushButton#UtilityButton:pressed { background: #dbeafe; }"
+        "QPushButton#DangerUtilityButton {"
+        "    font-size: 13px; font-weight: 700; color: #b91c1c;"
+        "    background: #fef2f2; border: 1px solid #fecaca; border-radius: 11px; padding: 0 14px;"
+        "}"
+        "QPushButton#DangerUtilityButton:pressed { background: #fee2e2; }"
+    );
     setCentralWidget(m_centralWidget);
 
     QVBoxLayout *root = new QVBoxLayout(m_centralWidget);
-    root->setContentsMargins(20, 14, 20, 14);
-    root->setSpacing(10);
+    root->setContentsMargins(28, 22, 28, 22);
+    root->setSpacing(14);
 
-    // ── top bar ──
     QHBoxLayout *topBar = new QHBoxLayout();
-    topBar->setSpacing(8);
+    topBar->setSpacing(12);
 
-    QLabel *titleLabel = new QLabel("Alarm Clock", this);
-    titleLabel->setStyleSheet(
-        "QLabel { font-size: 22px; font-weight: 700; color: white; }"
-    );
+    QWidget *titleWrap = new QWidget(this);
+    QVBoxLayout *titleLayout = new QVBoxLayout(titleWrap);
+    titleLayout->setContentsMargins(0, 0, 0, 0);
+    titleLayout->setSpacing(2);
+
+    QLabel *titleLabel = new QLabel("MOMS", this);
+    titleLabel->setObjectName("HeaderTitle");
+    QLabel *subTitleLabel = new QLabel("Make Our Morning Successful", this);
+    subTitleLabel->setObjectName("HeaderSubTitle");
+    titleLayout->addWidget(titleLabel);
+    titleLayout->addWidget(subTitleLabel);
 
     m_currentTimeLabel = new QLabel(this);
     m_currentTimeLabel->setAlignment(Qt::AlignCenter);
-    m_currentTimeLabel->setStyleSheet(
-        "QLabel {"
-        "    font-size: 20px; font-weight: 700; color: white;"
-        "    background: #202020; border-radius: 8px; padding: 4px 12px;"
-        "}"
-    );
+    m_currentTimeLabel->setObjectName("TimeBadge");
 
     m_debugPlus5SecButton = new QPushButton("+5s", this);
-    m_debugPlus5SecButton->setFixedSize(72, 40);
-    m_debugPlus5SecButton->setStyleSheet(
-        "QPushButton { font-size: 14px; font-weight: 700; color: white;"
-        "    background: #3a7a3a; border: none; border-radius: 8px; }"
-        "QPushButton:pressed { background: #2c5f2c; }"
-    );
+    m_debugPlus5SecButton->setObjectName("UtilityButton");
+    m_debugPlus5SecButton->setFixedHeight(40);
 
-    m_statButton = new QPushButton("Stat", this);
-    m_statButton->setFixedSize(72, 40);
-    m_statButton->setStyleSheet(
-        "QPushButton { font-size: 14px; font-weight: 700; color: white;"
-        "    background: #7a5a3a; border: none; border-radius: 8px; }"
-        "QPushButton:pressed { background: #5f4428; }"
-    );
+    m_statButton = new QPushButton("Stats", this);
+    m_statButton->setObjectName("UtilityButton");
+    m_statButton->setFixedHeight(40);
 
     m_exitButton = new QPushButton("Exit", this);
-    m_exitButton->setFixedSize(80, 40);
-    m_exitButton->setStyleSheet(
-        "QPushButton { font-size: 15px; font-weight: 700; color: white;"
-        "    background: #cc3333; border: none; border-radius: 8px; }"
-        "QPushButton:pressed { background: #992222; }"
-    );
+    m_exitButton->setObjectName("DangerUtilityButton");
+    m_exitButton->setFixedHeight(40);
 
-    topBar->addWidget(titleLabel);
+    topBar->addWidget(titleWrap, 1);
     topBar->addStretch();
     topBar->addWidget(m_currentTimeLabel);
-    topBar->addSpacing(12);
+    topBar->addSpacing(10);
     topBar->addWidget(m_debugPlus5SecButton);
     topBar->addWidget(m_statButton);
     topBar->addWidget(m_exitButton);
 
-    // ── alarm count label ──
-    m_alarmCountLabel = new QLabel("No alarms", this);
+    m_alarmCountLabel = new QLabel("No alarms yet", this);
+    m_alarmCountLabel->setObjectName("CountLabel");
     m_alarmCountLabel->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
-    m_alarmCountLabel->setStyleSheet(
-        "QLabel { font-size: 14px; color: #aaaaaa; padding: 0 2px; }"
-    );
 
-    // ── alarm list ──
     m_alarmListWidget = new QListWidget(this);
     m_alarmListWidget->setStyleSheet(
         "QListWidget {"
-        "    background: #141414; border: 1px solid #3a3a3a;"
-        "    border-radius: 10px; color: white; font-size: 17px;"
-        "    padding: 6px; outline: none;"
+        "    background: transparent; border: none;"
+        "    color: #0f172a; font-size: 16px; padding: 4px; outline: none;"
         "}"
-        "QListWidget::item { padding: 10px 14px; border-radius: 6px; }"
-        "QListWidget::item:selected { background: #2d7dff; color: white; }"
-        "QListWidget::item:hover:!selected { background: #222222; }"
+        "QListWidget::item { margin: 6px 0; }"
+        "QListWidget::item:selected { background: #dbeafe; border-radius: 18px; }"
     );
+    m_alarmListWidget->setSpacing(2);
 
-    // ── action buttons row ──
     QHBoxLayout *btnRow = new QHBoxLayout();
-    btnRow->setSpacing(10);
+    btnRow->setSpacing(12);
 
-    auto makeBtn = [this](const QString &label, const QString &bg, const QString &bgPressed) -> QPushButton * {
+    auto makeBtn = [this](const QString &label, const QString &objectName) -> QPushButton * {
         QPushButton *btn = new QPushButton(label, this);
-        btn->setFixedHeight(52);
-        btn->setStyleSheet(
-            QString(
-                "QPushButton { font-size: 17px; font-weight: 700; color: white;"
-                "    background: %1; border: none; border-radius: 10px; }"
-                "QPushButton:pressed { background: %2; }"
-            ).arg(bg, bgPressed)
-        );
+        btn->setObjectName(objectName);
+        btn->setFixedHeight(56);
         return btn;
     };
 
-    m_addButton    = makeBtn("+ Add Alarm", "#2d7dff", "#1d5fc7");
-    m_editButton   = makeBtn("Edit",        "#555555", "#333333");
-    m_deleteButton = makeBtn("Delete",      "#993333", "#771111");
+    m_addButton    = makeBtn("+ Add Alarm", "PrimaryButton");
+    m_editButton   = makeBtn("Edit", "SecondaryButton");
+    m_deleteButton = makeBtn("Delete", "SecondaryButton");
 
     btnRow->addWidget(m_addButton,    2);
     btnRow->addWidget(m_editButton,   1);
@@ -303,8 +311,8 @@ void MainWindow::refreshAlarmList()
     int activeCount = 0;
     for (int i = 0; i < m_alarms.size(); ++i) {
         const AlarmEntry &e = m_alarms.at(i);
-        QString mainText = QString("%1   ").arg(i + 1)
-                         + e.dateTime.toString("yyyy-MM-dd  hh:mm");
+        const QString timeText = e.dateTime.toString("hh:mm");
+        QString mainText = QString("%1  ·  %2").arg(timeText, e.dateTime.toString("yyyy-MM-dd"));
         const QString repeatText = repeatMaskToText(e.repeatMask);
         if (!repeatText.isEmpty()) {
             mainText += "   [" + repeatText + "]";
@@ -318,38 +326,47 @@ void MainWindow::refreshAlarmList()
         }
 
         QWidget *rowWidget = new QWidget(m_alarmListWidget);
-        rowWidget->setStyleSheet("background: transparent;");
+        rowWidget->setStyleSheet(
+            QString(
+                "QWidget {"
+                "    background: %1;"
+                "    border: 1px solid %2;"
+                "    border-radius: 16px;"
+                "}"
+            ).arg(e.enabled ? "#ffffff" : "#f8fafc",
+                  e.enabled ? "#e2e8f0" : "#e5e7eb")
+        );
         QHBoxLayout *rowLayout = new QHBoxLayout(rowWidget);
-        rowLayout->setContentsMargins(8, 4, 8, 4);
-        rowLayout->setSpacing(8);
+        rowLayout->setContentsMargins(16, 10, 16, 10);
+        rowLayout->setSpacing(10);
 
         QWidget *textWrap = new QWidget(rowWidget);
         QVBoxLayout *textLayout = new QVBoxLayout(textWrap);
         textLayout->setContentsMargins(0, 0, 0, 0);
-        textLayout->setSpacing(1);
+        textLayout->setSpacing(2);
 
         QLabel *mainLbl = new QLabel(mainText, textWrap);
         mainLbl->setStyleSheet(
-            QString("QLabel { font-size: 16px; color: %1; }")
-                .arg(e.enabled ? "#ffffff" : "#777777")
+            QString("QLabel { font-size: 20px; font-weight: 800; color: %1; background: transparent; border: none; }")
+                .arg(e.enabled ? "#0f172a" : "#94a3b8")
         );
         QLabel *subLbl = new QLabel(subText, textWrap);
         subLbl->setStyleSheet(
-            QString("QLabel { font-size: 12px; color: %1; }")
-                .arg(e.enabled ? "#66cc66" : "#888888")
+            QString("QLabel { font-size: 13px; font-weight: 600; color: %1; background: transparent; border: none; }")
+                .arg(e.enabled ? "#3182f6" : "#9ca3af")
         );
 
         textLayout->addWidget(mainLbl);
         textLayout->addWidget(subLbl);
 
         QPushButton *enableBtn = new QPushButton(rowWidget);
-        enableBtn->setFixedSize(82, 34);
+        enableBtn->setFixedSize(90, 36);
         if (e.enabled) {
-            enableBtn->setText("Disable");
+            enableBtn->setText("Off");
             enableBtn->setStyleSheet(
-                "QPushButton { font-size: 12px; font-weight: 700; color: white;"
-                "    background: #8b3a3a; border: none; border-radius: 8px; }"
-                "QPushButton:pressed { background: #6a2a2a; }"
+                "QPushButton { font-size: 13px; font-weight: 700; color: #b91c1c;"
+                "    background: #fee2e2; border: 1px solid #fecaca; border-radius: 10px; }"
+                "QPushButton:pressed { background: #fecaca; }"
             );
             connect(enableBtn, &QPushButton::clicked, this, [this, i]() {
                 if (i < 0 || i >= m_alarms.size()) return;
@@ -357,11 +374,11 @@ void MainWindow::refreshAlarmList()
                 refreshAlarmList();
             });
         } else {
-            enableBtn->setText("Enable");
+            enableBtn->setText("On");
             enableBtn->setStyleSheet(
-                "QPushButton { font-size: 12px; font-weight: 700; color: white;"
-                "    background: #2d7dff; border: none; border-radius: 8px; }"
-                "QPushButton:pressed { background: #1d5fc7; }"
+                "QPushButton { font-size: 13px; font-weight: 700; color: white;"
+                "    background: #3182f6; border: none; border-radius: 10px; }"
+                "QPushButton:pressed { background: #2272e6; }"
             );
             connect(enableBtn, &QPushButton::clicked, this, [this, i]() {
                 if (i < 0 || i >= m_alarms.size()) return;
@@ -387,12 +404,12 @@ void MainWindow::refreshAlarmList()
         rowLayout->addWidget(textWrap, 1);
         rowLayout->addWidget(enableBtn, 0, Qt::AlignVCenter);
 
-        QPushButton *statBtn = new QPushButton("Stat", rowWidget);
-        statBtn->setFixedSize(52, 34);
+        QPushButton *statBtn = new QPushButton("Log", rowWidget);
+        statBtn->setFixedSize(64, 36);
         statBtn->setStyleSheet(
-            "QPushButton { font-size: 12px; font-weight: 700; color: white;"
-            "    background: #7a5a3a; border: none; border-radius: 8px; }"
-            "QPushButton:pressed { background: #5f4428; }"
+            "QPushButton { font-size: 13px; font-weight: 700; color: #334155;"
+            "    background: #e2e8f0; border: none; border-radius: 10px; }"
+            "QPushButton:pressed { background: #cbd5e1; }"
         );
         connect(statBtn, &QPushButton::clicked, this, [this, i, statBtn]() {
             QPointer<QPushButton> safe = statBtn;
@@ -404,7 +421,7 @@ void MainWindow::refreshAlarmList()
         rowLayout->addWidget(statBtn, 0, Qt::AlignVCenter);
 
         QListWidgetItem *item = new QListWidgetItem(m_alarmListWidget);
-        item->setSizeHint(QSize(0, 58));
+        item->setSizeHint(QSize(0, 92));
         m_alarmListWidget->addItem(item);
         m_alarmListWidget->setItemWidget(item, rowWidget);
 
@@ -412,10 +429,10 @@ void MainWindow::refreshAlarmList()
     }
 
     if (m_alarms.isEmpty()) {
-        m_alarmCountLabel->setText("No alarms");
+        m_alarmCountLabel->setText("No alarms set");
     } else {
         m_alarmCountLabel->setText(
-            QString("%1 alarm(s)  —  %2 active").arg(m_alarms.size()).arg(activeCount)
+            QString("%1 alarm(s) · %2 active").arg(m_alarms.size()).arg(activeCount)
         );
     }
 
@@ -662,7 +679,7 @@ void MainWindow::setDebugAlarmPlus5Sec()
     QTimer::singleShot(500, this, [this]() { m_debugPlus5SecButton->setEnabled(true); });
 
     QDialog dlg(this);
-    dlg.setWindowTitle("Debug +5s Alarm");
+    dlg.setWindowTitle("Quick Alarm (+5s)");
     dlg.setFixedSize(520, 280);
     dlg.setStyleSheet(
         "QDialog { background: #0b0b0b; }"
@@ -705,9 +722,9 @@ void MainWindow::setDebugAlarmPlus5Sec()
     QLabel *modeLabel = new QLabel("Dismiss Mode", &dlg);
     modeLabel->setStyleSheet("QLabel { font-size: 13px; color: #aaaaaa; }");
     QComboBox *modeCombo = new QComboBox(&dlg);
-    modeCombo->addItem("Simple Dismiss", AlarmDialog::DismissSimple);
-    modeCombo->addItem("Game Mode", AlarmDialog::DismissGame);
-    modeCombo->addItem("Physical Button", AlarmDialog::DismissButton);
+    modeCombo->addItem("Simple", AlarmDialog::DismissSimple);
+    modeCombo->addItem("Game", AlarmDialog::DismissGame);
+    modeCombo->addItem("Button", AlarmDialog::DismissButton);
     modeCombo->addItem("Camera", AlarmDialog::DismissCamera);
     modeCombo->setFixedHeight(40);
     root->addWidget(modeLabel);
