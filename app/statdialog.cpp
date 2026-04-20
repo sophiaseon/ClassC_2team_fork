@@ -22,7 +22,7 @@ void StatDialog::buildUi(const QString &logFilePath, const QString &title)
 {
     setWindowTitle(title.isEmpty() ? "Alarm Statistics" : title);
     setFixedSize(780, 500);
-    setStyleSheet("background: #0b0b0b;");
+    setStyleSheet("QDialog { background: #0b0b0b; border: 2px solid #ffffff; border-radius: 4px; }");
 
     QVBoxLayout *root = new QVBoxLayout(this);
     root->setContentsMargins(20, 16, 20, 16);
@@ -151,7 +151,7 @@ void StatDialog::buildUi(const QString &logFilePath, const QString &title)
                     dlg->setAttribute(Qt::WA_DeleteOnClose);
                     dlg->setWindowTitle("Captured Photo");
                     dlg->setFixedSize(760, 560);
-                    dlg->setStyleSheet("background: #0b0b0b;");
+                    dlg->setStyleSheet("QDialog { background: #0b0b0b; border: 2px solid #ffffff; border-radius: 4px; }");
 
                     QVBoxLayout *vl = new QVBoxLayout(dlg);
                     vl->setContentsMargins(12, 12, 12, 12);

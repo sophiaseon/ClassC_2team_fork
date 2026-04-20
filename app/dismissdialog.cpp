@@ -57,7 +57,7 @@ DismissDialog::DismissDialog(const QStringList &alarmTimes,
     m_actionTimer.start();
 
     setWindowTitle("Alarm!");
-    setStyleSheet("background: #0b0b0b;");
+    setStyleSheet("QDialog { background: #0b0b0b; border: 2px solid #ffffff; border-radius: 4px; }");
 
     // Block OS close button for game/button/ultrasonic mode
     if (m_mode == Game || m_mode == Button || m_mode == Camera || m_mode == Ultrasonic) {

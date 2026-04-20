@@ -172,7 +172,7 @@ void MainWindow::stopBuzzer()
 // ── buildUi ──────────────────────────────────────────────────────────────────
 void MainWindow::buildUi()
 {
-    setWindowTitle("Alarm Clock");
+    setWindowTitle("MOMS");
     setFixedSize(900, 600);
 
     m_centralWidget = new QWidget(this);
@@ -187,7 +187,7 @@ void MainWindow::buildUi()
     QHBoxLayout *topBar = new QHBoxLayout();
     topBar->setSpacing(8);
 
-    QLabel *titleLabel = new QLabel("Alarm Clock", this);
+    QLabel *titleLabel = new QLabel("MOMS", this);
     titleLabel->setStyleSheet(
         "QLabel { font-size: 22px; font-weight: 700; color: white; }"
     );

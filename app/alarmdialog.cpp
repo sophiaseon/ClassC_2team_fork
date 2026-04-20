@@ -171,17 +171,20 @@ bool AlarmDialog::useSpecificDate() const
 void AlarmDialog::buildUi()
 {
     setWindowTitle(m_editIndex < 0 ? "Add Alarm" : "Edit Alarm");
-    setFixedSize(900, 550);
-    setStyleSheet("background: #0b0b0b;");
+    setFixedSize(900, 600);
+    setStyleSheet("QDialog { background: #0b0b0b; border: 2px solid #ffffff; border-radius: 4px; }");
 
     QVBoxLayout *root = new QVBoxLayout(this);
     root->setContentsMargins(20, 8, 20, 8);
     root->setSpacing(6);
 
+    root->addSpacing(12);
+
     QLabel *titleLabel = new QLabel(m_editIndex < 0 ? "Add Alarm" : "Edit Alarm", this);
     titleLabel->setAlignment(Qt::AlignCenter);
     titleLabel->setStyleSheet("QLabel { font-size: 20px; font-weight: 700; color: white; }");
     root->addWidget(titleLabel);
+    root->addSpacing(12);
 
     QGridLayout *timeGrid = new QGridLayout();
     timeGrid->setHorizontalSpacing(24);
@@ -267,13 +270,17 @@ void AlarmDialog::buildUi()
         cb->setFixedHeight(h);
         cb->setStyleSheet(
             "QComboBox {"
-            "    font-size: 15px; color: white; background: #202020;"
+            "    font-size: 18px; font-weight: 700; color: white; background: #202020;"
             "    border: 1px solid #4a4a4a; border-radius: 8px; padding: 3px 10px;"
             "}"
-            "QComboBox::drop-down { border: none; width: 24px; }"
+            "QComboBox::drop-down { border: none; width: 30px; }"
             "QComboBox QAbstractItemView {"
             "    background: #202020; color: white;"
+            "    font-size: 24px; font-weight: 700;"
             "    selection-background-color: #2d7dff;"
+            "}"
+            "QComboBox QAbstractItemView::item {"
+            "    min-height: 100px; padding: 10 12px;"
             "}"
         );
         return cb;
@@ -307,7 +314,7 @@ void AlarmDialog::buildUi()
     modeButtons << m_simpleModeBtn << m_gameModeBtn << m_buttonModeBtn
                 << m_cameraModeBtn << m_ultrasonicModeBtn;
     for (QPushButton *btn : modeButtons) {
-        btn->setFixedHeight(38);
+        btn->setFixedHeight(44);
         modeBtnRow->addWidget(btn, 1);
     }
 
@@ -316,7 +323,7 @@ void AlarmDialog::buildUi()
     m_gameCombo->addItem("Color Memory (5-6-7)", GameColorMemory);
 
     m_gameOptionStack = new QStackedWidget(this);
-    m_gameOptionStack->setFixedHeight(40);
+    m_gameOptionStack->setFixedHeight(52);
     QWidget *blankPage = new QWidget(this);
     blankPage->setStyleSheet("background: transparent;");
     m_gameOptionStack->addWidget(blankPage);
@@ -435,10 +442,10 @@ void AlarmDialog::buildUi()
 void AlarmDialog::refreshModeStyle()
 {
     const QString on =
-        "QPushButton { font-size: 15px; font-weight: 700; color: white;"
+        "QPushButton { font-size: 18px; font-weight: 700; color: white;"
         "    background: #2d7dff; border: none; border-radius: 8px; }";
     const QString off =
-        "QPushButton { font-size: 15px; font-weight: 700; color: #888888;"
+        "QPushButton { font-size: 18px; font-weight: 700; color: #888888;"
         "    background: #2c2c2c; border: 1px solid #4a4a4a; border-radius: 8px; }";
 
     m_simpleModeBtn->setStyleSheet(m_dismissMode == DismissSimple ? on : off);
@@ -608,7 +615,7 @@ void AlarmDialog::openCalendarDialog()
     QDialog dlg(this);
     dlg.setWindowTitle("Select Date");
     dlg.setFixedSize(620, 420);
-    dlg.setStyleSheet("background: #0b0b0b;");
+    dlg.setStyleSheet("QDialog { background: #0b0b0b; border: 2px solid #ffffff; border-radius: 4px; }");
 
     int year = m_specificDate.year();
     int month = m_specificDate.month();
