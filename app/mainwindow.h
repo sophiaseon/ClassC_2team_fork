@@ -36,6 +36,8 @@ private slots:
     void openAlarmStatDialog(int alarmIndex);
 
 private:
+    void showStyledAlert(const QString &title, const QString &message);
+
     struct AlarmEntry {
         int       alarmId     = 0;    // unique ID assigned at creation
         QDateTime dateTime;

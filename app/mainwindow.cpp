@@ -628,6 +628,54 @@ void MainWindow::openAddDialog()
     }
 }
 
+// ── showStyledAlert ───────────────────────────────────────────────────────────
+void MainWindow::showStyledAlert(const QString &title, const QString &message)
+{
+    QDialog dlg(this);
+    dlg.setWindowTitle(title);
+    dlg.setFixedSize(420, 200);
+    dlg.setStyleSheet(
+        "QDialog {"
+        "    background: #0b0b0b;"
+        "    border: 2px solid #ffffff;"
+        "    border-radius: 4px;"
+        "}"
+    );
+
+    QVBoxLayout *root = new QVBoxLayout(&dlg);
+    root->setContentsMargins(28, 24, 28, 20);
+    root->setSpacing(0);
+
+    QLabel *titleLbl = new QLabel(title, &dlg);
+    titleLbl->setStyleSheet(
+        "QLabel { font-size: 18px; font-weight: 700; color: #ffffff; }"
+    );
+    root->addWidget(titleLbl);
+    root->addSpacing(12);
+
+    QLabel *msgLbl = new QLabel(message, &dlg);
+    msgLbl->setWordWrap(true);
+    msgLbl->setStyleSheet(
+        "QLabel { font-size: 15px; color: #aaaaaa; }"
+    );
+    root->addWidget(msgLbl);
+    root->addStretch();
+
+    QPushButton *okBtn = new QPushButton("OK", &dlg);
+    okBtn->setFixedHeight(44);
+    okBtn->setStyleSheet(
+        "QPushButton {"
+        "    font-size: 17px; font-weight: 700; color: white;"
+        "    background: #2d7dff; border: none; border-radius: 8px;"
+        "}"
+        "QPushButton:pressed { background: #1d5fc7; }"
+    );
+    connect(okBtn, &QPushButton::clicked, &dlg, &QDialog::accept);
+    root->addWidget(okBtn);
+
+    dlg.exec();
+}
+
 // ── openEditDialog ────────────────────────────────────────────────────────────
 void MainWindow::openEditDialog()
 {
@@ -636,7 +684,7 @@ void MainWindow::openEditDialog()
 
     const int row = m_alarmListWidget->currentRow();
     if (row < 0 || row >= m_alarms.size()) {
-        QMessageBox::information(this, "Edit Alarm", "Please select an alarm to edit.");
+        showStyledAlert("No Alarm Selected", "Please select an alarm from the list to edit.");
         return;
     }
 

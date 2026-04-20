@@ -76,6 +76,17 @@ void StatDialog::buildUi(const QString &logFilePath, const QString &title)
         "QListWidget::item { padding: 2px 6px; border-radius: 4px; }"
         "QListWidget::item:alternate { background: #1a1a1a; }"
         "QListWidget::item:selected { background: #2d7dff; }"
+        /* scrollbar */
+        "QScrollBar:vertical {"
+        "    background: #141414; width: 8px;"
+        "    margin: 6px 2px 6px 2px; border-radius: 4px;"
+        "}"
+        "QScrollBar::handle:vertical {"
+        "    background: #3a3a3a; border-radius: 4px; min-height: 24px;"
+        "}"
+        "QScrollBar::handle:vertical:hover { background: #555555; }"
+        "QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0px; }"
+        "QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical { background: none; }"
     );
     listWidget->setAlternatingRowColors(true);
     listWidget->setSelectionMode(QAbstractItemView::NoSelection);
