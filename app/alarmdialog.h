@@ -5,11 +5,13 @@
 #include <QDateTime>
 #include <QDialog>
 #include <QElapsedTimer>
+#include <functional>
 
 class QComboBox;
 class QLabel;
 class QPushButton;
 class QStackedWidget;
+class QTimer;
 class QWidget;
 
 class AlarmDialog : public QDialog
@@ -59,6 +61,7 @@ private slots:
 
 private:
     void buildUi();
+    void connectRepeatButton(QPushButton *btn, std::function<void()> action);
     QTime selectedTime() const;
     void setTimeFromDateTime(const QDateTime &dt);
     void refreshTimeLabels();
@@ -100,6 +103,10 @@ private:
     QPushButton *m_calendarToggleBtn;
 
     QElapsedTimer m_adjustTimer;
+
+    QTimer *m_repeatTimer;
+    std::function<void()> m_repeatAction;
+    int m_repeatCount;
 
     QComboBox *m_soundCombo;
     QComboBox *m_gameCombo;

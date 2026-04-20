@@ -359,6 +359,7 @@ void MainWindow::refreshAlarmList()
             connect(enableBtn, &QPushButton::clicked, this, [this, i]() {
                 if (i < 0 || i >= m_alarms.size()) return;
                 m_alarms[i].enabled = false;
+                saveAlarms();
                 refreshAlarmList();
             });
         } else {
@@ -385,6 +386,7 @@ void MainWindow::refreshAlarmList()
                     entry.useSpecificDate = false;
                 }
 
+                saveAlarms();
                 refreshAlarmList();
             });
         }

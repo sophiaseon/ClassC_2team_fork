@@ -117,8 +117,17 @@ AlarmDialog::AlarmDialog(QWidget *parent,
     , m_buttonModeBtn(nullptr)
     , m_cameraModeBtn(nullptr)
     , m_ultrasonicModeBtn(nullptr)
+    , m_repeatTimer(new QTimer(this))
+    , m_repeatCount(0)
 {
     for (int i = 0; i < 7; ++i) m_weekdayButtons[i] = nullptr;
+
+    m_repeatTimer->setSingleShot(false);
+    connect(m_repeatTimer, &QTimer::timeout, this, [this]() {
+        ++m_repeatCount;
+        if (m_repeatCount == 1) m_repeatTimer->setInterval(150);
+        if (m_repeatAction) m_repeatAction();
+    });
 
     buildUi();
     m_adjustTimer.start();
@@ -365,10 +374,10 @@ void AlarmDialog::buildUi()
 
     connect(m_ampmPlusButton, &QPushButton::clicked, this, &AlarmDialog::increaseAmPm);
     connect(m_ampmMinusButton, &QPushButton::clicked, this, &AlarmDialog::decreaseAmPm);
-    connect(m_hourPlusButton, &QPushButton::clicked, this, &AlarmDialog::increaseHour);
-    connect(m_hourMinusButton, &QPushButton::clicked, this, &AlarmDialog::decreaseHour);
-    connect(m_minutePlusButton, &QPushButton::clicked, this, &AlarmDialog::increaseMinute);
-    connect(m_minuteMinusButton, &QPushButton::clicked, this, &AlarmDialog::decreaseMinute);
+    connectRepeatButton(m_hourPlusButton,    [this]() { increaseHour(); });
+    connectRepeatButton(m_hourMinusButton,   [this]() { decreaseHour(); });
+    connectRepeatButton(m_minutePlusButton,  [this]() { increaseMinute(); });
+    connectRepeatButton(m_minuteMinusButton, [this]() { decreaseMinute(); });
 
     connect(m_simpleModeBtn, &QPushButton::clicked, this, [this]() {
         m_simpleModeBtn->setEnabled(false);
@@ -502,8 +511,6 @@ void AlarmDialog::decreaseAmPm()
 
 void AlarmDialog::increaseHour()
 {
-    m_hourPlusButton->setEnabled(false);
-    QTimer::singleShot(400, this, [this]() { m_hourPlusButton->setEnabled(true); });
     ++m_hour12;
     if (m_hour12 > 12) m_hour12 = 1;
     refreshTimeLabels();
@@ -511,8 +518,6 @@ void AlarmDialog::increaseHour()
 
 void AlarmDialog::decreaseHour()
 {
-    m_hourMinusButton->setEnabled(false);
-    QTimer::singleShot(400, this, [this]() { m_hourMinusButton->setEnabled(true); });
     --m_hour12;
     if (m_hour12 < 1) m_hour12 = 12;
     refreshTimeLabels();
@@ -520,8 +525,6 @@ void AlarmDialog::decreaseHour()
 
 void AlarmDialog::increaseMinute()
 {
-    m_minutePlusButton->setEnabled(false);
-    QTimer::singleShot(400, this, [this]() { m_minutePlusButton->setEnabled(true); });
     ++m_minute;
     if (m_minute > 59) m_minute = 0;
     refreshTimeLabels();
@@ -529,8 +532,6 @@ void AlarmDialog::increaseMinute()
 
 void AlarmDialog::decreaseMinute()
 {
-    m_minuteMinusButton->setEnabled(false);
-    QTimer::singleShot(400, this, [this]() { m_minuteMinusButton->setEnabled(true); });
     --m_minute;
     if (m_minute < 0) m_minute = 59;
     refreshTimeLabels();
@@ -662,34 +663,42 @@ void AlarmDialog::openCalendarDialog()
         dayValue->setText(QString::number(day));
     };
 
-    QElapsedTimer calTimer;
-    calTimer.start();
+    // Long-press auto-repeat timer for the calendar +/- buttons
+    QTimer *calRepeatTimer = new QTimer(&dlg);
+    calRepeatTimer->setSingleShot(false);
+    int calRepeatCount = 0;
+    std::function<void()> calRepeatAction;
 
-    connect(yearPlus, &QPushButton::clicked, &dlg, [&]() {
-        if (calTimer.elapsed() < 300) return; calTimer.restart();
-        ++year; if (year > 2099) year = 2000; refresh();
+    connect(calRepeatTimer, &QTimer::timeout, &dlg, [&]() {
+        ++calRepeatCount;
+        if (calRepeatCount == 1) calRepeatTimer->setInterval(150);
+        if (calRepeatAction) calRepeatAction();
     });
-    connect(yearMinus, &QPushButton::clicked, &dlg, [&]() {
-        if (calTimer.elapsed() < 300) return; calTimer.restart();
-        --year; if (year < 2000) year = 2099; refresh();
-    });
-    connect(monthPlus, &QPushButton::clicked, &dlg, [&]() {
-        if (calTimer.elapsed() < 300) return; calTimer.restart();
-        ++month; if (month > 12) month = 1; refresh();
-    });
-    connect(monthMinus, &QPushButton::clicked, &dlg, [&]() {
-        if (calTimer.elapsed() < 300) return; calTimer.restart();
-        --month; if (month < 1) month = 12; refresh();
-    });
-    connect(dayPlus, &QPushButton::clicked, &dlg, [&]() {
-        if (calTimer.elapsed() < 300) return; calTimer.restart();
+
+    auto connectCalBtn = [&](QPushButton *btn, std::function<void()> action) {
+        connect(btn, &QPushButton::pressed, &dlg, [&, action]() {
+            action();
+            calRepeatCount = 0;
+            calRepeatAction = action;
+            calRepeatTimer->setInterval(600);
+            calRepeatTimer->start();
+        });
+        connect(btn, &QPushButton::released, &dlg, [&]() {
+            calRepeatTimer->stop();
+        });
+    };
+
+    connectCalBtn(yearPlus,  [&]() { ++year;  if (year  > 2099) year  = 2000; refresh(); });
+    connectCalBtn(yearMinus, [&]() { --year;  if (year  < 2000) year  = 2099; refresh(); });
+    connectCalBtn(monthPlus, [&]() { ++month; if (month > 12)   month = 1;    refresh(); });
+    connectCalBtn(monthMinus,[&]() { --month; if (month < 1)    month = 12;   refresh(); });
+    connectCalBtn(dayPlus,   [&]() {
         ++day;
         int maxDay = daysInMonth(year, month);
         if (day > maxDay) day = 1;
         refresh();
     });
-    connect(dayMinus, &QPushButton::clicked, &dlg, [&]() {
-        if (calTimer.elapsed() < 300) return; calTimer.restart();
+    connectCalBtn(dayMinus,  [&]() {
         --day;
         int maxDay = daysInMonth(year, month);
         if (day < 1) day = maxDay;
@@ -752,4 +761,21 @@ void AlarmDialog::openCalendarDialog()
     if (dlg.exec() == QDialog::Accepted) {
         refreshDateSummary();
     }
+}
+
+void AlarmDialog::connectRepeatButton(QPushButton *btn, std::function<void()> action)
+{
+    // pressed  → fire once immediately, then start long-press timer (600 ms initial delay)
+    // released → stop timer
+    // clicked is NOT connected so there is no double-fire on a quick tap.
+    connect(btn, &QPushButton::pressed, this, [this, action]() {
+        action();
+        m_repeatCount = 0;
+        m_repeatAction = action;
+        m_repeatTimer->setInterval(600);
+        m_repeatTimer->start();
+    });
+    connect(btn, &QPushButton::released, this, [this]() {
+        m_repeatTimer->stop();
+    });
 }
