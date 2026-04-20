@@ -46,7 +46,7 @@ DismissDialog::DismissDialog(const QStringList &alarmTimes,
     m_actionTimer.start();
 
     setWindowTitle("Alarm!");
-    setStyleSheet("QDialog { background: #f8fafc; }");
+    setStyleSheet("background: #0b0b0b;");
 
     // Block OS close button for game/button mode
     if (m_mode == Game || m_mode == Button || m_mode == Camera) {
@@ -107,14 +107,14 @@ void DismissDialog::buildSimpleUi(const QStringList &alarmTimes)
     QLabel *titleLabel = new QLabel("Alarm is ringing!", this);
     titleLabel->setAlignment(Qt::AlignCenter);
     titleLabel->setStyleSheet(
-        "QLabel { font-size: 22px; font-weight: 800; color: #0f172a; }"
+        "QLabel { font-size: 20px; font-weight: 700; color: #ff6666; }"
     );
     root->addWidget(titleLabel);
 
     QLabel *timesLabel = new QLabel(alarmTimes.join("\n"), this);
     timesLabel->setAlignment(Qt::AlignCenter);
     timesLabel->setStyleSheet(
-        "QLabel { font-size: 15px; color: #64748b; }"
+        "QLabel { font-size: 15px; color: #dddddd; }"
     );
     root->addWidget(timesLabel);
 
@@ -124,8 +124,8 @@ void DismissDialog::buildSimpleUi(const QStringList &alarmTimes)
     dismissBtn->setFixedHeight(52);
     dismissBtn->setStyleSheet(
         "QPushButton { font-size: 18px; font-weight: 700; color: white;"
-        "    background: #3182f6; border: none; border-radius: 12px; }"
-        "QPushButton:pressed { background: #2272e6; }"
+        "    background: #2d7dff; border: none; border-radius: 10px; }"
+        "QPushButton:pressed { background: #1d5fc7; }"
     );
     connect(dismissBtn, &QPushButton::clicked, this, [this]() {
         if (m_actionTimer.elapsed() < 300) return;
@@ -509,13 +509,12 @@ void DismissDialog::buildButtonUi(const QStringList &alarmTimes)
     QLabel *titleLabel = new QLabel("Alarm is ringing!", this);
     titleLabel->setAlignment(Qt::AlignCenter);
     titleLabel->setStyleSheet(
-        "QLabel { font-size: 22px; font-weight: 800; color: #0f172a; }"
+        "QLabel { font-size: 20px; font-weight: 700; color: #ff6666; }"
     );
     root->addWidget(titleLabel);
 
     QLabel *timesLabel = new QLabel(alarmTimes.join("  /  "), this);
     timesLabel->setAlignment(Qt::AlignCenter);
-<<<<<<< HEAD
     timesLabel->setStyleSheet("QLabel { font-size: 13px; color: #aaaaaa; }");
     root->addWidget(timesLabel);
 
@@ -549,17 +548,6 @@ void DismissDialog::buildButtonUi(const QStringList &alarmTimes)
     m_btnStatusLabel->setWordWrap(true);
     m_btnStatusLabel->setStyleSheet(
         "QLabel { font-size: 15px; font-weight: 600; color: #2d7dff; }"
-=======
-    timesLabel->setStyleSheet(
-        "QLabel { font-size: 14px; color: #64748b; }"
-    );
-    root->addWidget(timesLabel);
-
-    QLabel *instrLabel = new QLabel("Press the physical button to dismiss the alarm", this);
-    instrLabel->setAlignment(Qt::AlignCenter);
-    instrLabel->setStyleSheet(
-        "QLabel { font-size: 15px; font-weight: 700; color: #3182f6; }"
->>>>>>> 6e0c152 (app_white_MOMS)
     );
     root->addWidget(m_btnStatusLabel);
 
@@ -590,14 +578,14 @@ void DismissDialog::buildCameraUi(const QStringList &alarmTimes)
     QLabel *titleLabel = new QLabel("Alarm is ringing!", this);
     titleLabel->setAlignment(Qt::AlignCenter);
     titleLabel->setStyleSheet(
-        "QLabel { font-size: 22px; font-weight: 800; color: #0f172a; }"
+        "QLabel { font-size: 20px; font-weight: 700; color: #ff6666; }"
     );
     root->addWidget(titleLabel);
 
     QLabel *timesLabel = new QLabel(alarmTimes.join("\n"), this);
     timesLabel->setAlignment(Qt::AlignCenter);
     timesLabel->setStyleSheet(
-        "QLabel { font-size: 14px; color: #64748b; }"
+        "QLabel { font-size: 14px; color: #dddddd; }"
     );
     root->addWidget(timesLabel);
 
@@ -605,7 +593,7 @@ void DismissDialog::buildCameraUi(const QStringList &alarmTimes)
     m_cameraPreviewLabel->setMinimumSize(640, 480);
     m_cameraPreviewLabel->setAlignment(Qt::AlignCenter);
     m_cameraPreviewLabel->setStyleSheet(
-        "QLabel { background: #ffffff; border: 1px solid #dbe3ef; border-radius: 12px; color: #94a3b8; }"
+        "QLabel { background: #141414; border: 1px solid #3a3a3a; border-radius: 10px; color: #888888; }"
     );
     m_cameraPreviewLabel->setText("Starting camera...");
     root->addWidget(m_cameraPreviewLabel, 1);
@@ -613,7 +601,7 @@ void DismissDialog::buildCameraUi(const QStringList &alarmTimes)
     m_cameraStatusLabel = new QLabel("Press physical button to capture photo and dismiss", this);
     m_cameraStatusLabel->setAlignment(Qt::AlignCenter);
     m_cameraStatusLabel->setStyleSheet(
-        "QLabel { font-size: 15px; font-weight: 700; color: #3182f6; }"
+        "QLabel { font-size: 15px; font-weight: 700; color: #2d7dff; }"
     );
     root->addWidget(m_cameraStatusLabel);
 
