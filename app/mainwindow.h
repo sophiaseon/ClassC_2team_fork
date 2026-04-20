@@ -41,10 +41,11 @@ private:
         QDateTime dateTime;
         bool      enabled     = true;
         QString   soundFile   = "/mnt/nfs/test_contents/test.wav";
-        int       dismissMode = 0; // 0=Simple 1=Game 2=Button 3=Camera
+        int       dismissMode = 0; // 0=Simple 1=Game 2=Button 3=Camera 4=Ultrasonic
         int       gameType    = 0; // 0=NumberOrder 1=ColorMemory
         int       repeatMask  = 0; // bit0=Sun ... bit6=Sat
         bool      useSpecificDate = false;
+        QString   logFile;        // persisted log path, e.g. /mnt/nfs/capture/alarm_3.txt
     };
 
     void buildUi();
@@ -52,6 +53,11 @@ private:
     void refreshAlarmList();
     void startBuzzerTetris();
     void stopBuzzer();
+    void loadAlarmCounter();
+    void saveAlarmCounter();
+
+    static QString alarmLogPath(int alarmId)
+    { return QString("/mnt/nfs/capture/alarm_%1.txt").arg(alarmId); }
 
     QWidget     *m_centralWidget;
     QTimer      *m_clockTimer;

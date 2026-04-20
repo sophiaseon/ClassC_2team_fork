@@ -85,7 +85,10 @@ ButtonWatcher::~ButtonWatcher()
         (void)::write(m_stopPipe[1], &c, 1);
     }
     m_thread.quit();
-    m_thread.wait();
+    if (!m_thread.wait(3000)) {
+        m_thread.terminate();
+        m_thread.wait(1000);
+    }
     delete m_worker;
     if (m_fd         >= 0) ::close(m_fd);
     if (m_stopPipe[0] >= 0) ::close(m_stopPipe[0]);

@@ -110,6 +110,8 @@ MainWindow::MainWindow(QWidget *parent)
 
     m_actionTimer.start();
 
+    loadAlarmCounter();
+
     connect(m_clockTimer,         &QTimer::timeout,     this, &MainWindow::updateCurrentTime);
     connect(m_exitButton,         &QPushButton::clicked, this, &MainWindow::close);
     connect(m_addButton,          &QPushButton::clicked, this, &MainWindow::openAddDialog);
@@ -539,9 +541,10 @@ void MainWindow::updateCurrentTime()
         }
         // Write per-alarm log files
         for (const TriggeredInfo &t : triggered) {
-            const QString alarmLogPath =
-                QString("/mnt/nfs/capture/alarm_%1.txt").arg(t.alarmId);
-            QFile alarmLog(alarmLogPath);
+            if (t.index < 0 || t.index >= m_alarms.size()) continue;
+            const QString &path = m_alarms[t.index].logFile;
+            if (path.isEmpty()) continue;
+            QFile alarmLog(path);
             if (alarmLog.open(QIODevice::Append | QIODevice::Text)) {
                 QTextStream out(&alarmLog);
                 out << "ALARM: " << t.alarmTime
@@ -600,7 +603,9 @@ void MainWindow::openAddDialog()
     entry.gameType    = dlg.gameType();
     entry.repeatMask  = dlg.repeatMask();
     entry.useSpecificDate = dlg.useSpecificDate();
+    entry.logFile     = alarmLogPath(entry.alarmId);
     m_alarms.append(entry);
+    saveAlarmCounter();
     sortAlarmsByTime();
     refreshAlarmList();
     for (int i = 0; i < m_alarms.size(); ++i) {
@@ -773,7 +778,9 @@ void MainWindow::setDebugAlarmPlus5Sec()
     entry.gameType = gameCombo->currentData().toInt();
     entry.repeatMask = 0;
     entry.useSpecificDate = false;
+    entry.logFile   = alarmLogPath(entry.alarmId);
     m_alarms.append(entry);
+    saveAlarmCounter();
     sortAlarmsByTime();
     refreshAlarmList();
 }
@@ -793,8 +800,7 @@ void MainWindow::openAlarmStatDialog(int alarmIndex)
 {
     if (alarmIndex < 0 || alarmIndex >= m_alarms.size()) return;
     const AlarmEntry &e = m_alarms.at(alarmIndex);
-    const QString logPath =
-        QString("/mnt/nfs/capture/alarm_%1.txt").arg(e.alarmId);
+    const QString logPath = e.logFile.isEmpty() ? alarmLogPath(e.alarmId) : e.logFile;
     const QString repeatText = repeatMaskToText(e.repeatMask);
     const QString timeStr = e.dateTime.toString("hh:mm");
     const QString title = repeatText.isEmpty()
@@ -803,4 +809,32 @@ void MainWindow::openAlarmStatDialog(int alarmIndex)
               .arg(alarmIndex + 1).arg(timeStr).arg(repeatText);
     StatDialog dlg(logPath, this, title);
     dlg.exec();
+}
+
+// ── loadAlarmCounter / saveAlarmCounter ───────────────────────────────────────
+#define ALARM_COUNTER_FILE "/mnt/nfs/capture/alarm_counter.txt"
+
+void MainWindow::loadAlarmCounter()
+{
+    QDir().mkpath("/mnt/nfs/capture");
+    QFile f(ALARM_COUNTER_FILE);
+    if (f.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        QTextStream in(&f);
+        int saved = 0;
+        in >> saved;
+        f.close();
+        if (saved > 0)
+            m_nextAlarmId = saved;
+    }
+}
+
+void MainWindow::saveAlarmCounter()
+{
+    QDir().mkpath("/mnt/nfs/capture");
+    QFile f(ALARM_COUNTER_FILE);
+    if (f.open(QIODevice::WriteOnly | QIODevice::Text | QIODevice::Truncate)) {
+        QTextStream out(&f);
+        out << m_nextAlarmId;
+        f.close();
+    }
 }
