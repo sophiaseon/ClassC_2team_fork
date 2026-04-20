@@ -37,7 +37,7 @@ static volatile unsigned long gpio_base;
 static struct resource *gpio_mem;
 #endif
 
-#define GPIO_KEY 18
+#define GPIO_KEY 530
 int irq_key;
 static int irq_enabled = 0;
 static atomic_t pressed = ATOMIC_INIT(0);
