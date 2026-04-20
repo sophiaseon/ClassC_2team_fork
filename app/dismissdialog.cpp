@@ -1,5 +1,6 @@
 #include "dismissdialog.h"
 #include "alarmcamerathread.h"
+#include "ultrasonicwatcher.h"
 
 #include <QCloseEvent>
 #include <QDateTime>
@@ -39,17 +40,27 @@ DismissDialog::DismissDialog(const QStringList &alarmTimes,
     , m_btnTargetLabel(nullptr)
     , m_btnCountdownLabel(nullptr)
     , m_btnStatusLabel(nullptr)
+    , m_usWatcher(nullptr)
+    , m_usStep(0)
+    , m_usNeedRelease(false)
+    , m_usHolding(false)
+    , m_usTargetLabel(nullptr)
+    , m_usProgressLabel(nullptr)
+    , m_usStatusLabel(nullptr)
 {
     for (int i = 0; i < 25; ++i) m_numButtons[i] = nullptr;
-    for (int i = 0; i < 4; ++i) m_colorButtons[i] = nullptr;
+    for (int i = 0; i < 4; ++i)  m_colorButtons[i]  = nullptr;
+    for (int i = 0; i < 4; ++i)  m_usSeq[i]         = i;
+    for (int i = 0; i < 4; ++i)  m_usStepLabels[i]  = nullptr;
+    for (int i = 0; i < 4; ++i)  m_usDistLabels[i]  = nullptr;
 
     m_actionTimer.start();
 
     setWindowTitle("Alarm!");
     setStyleSheet("background: #0b0b0b;");
 
-    // Block OS close button for game/button mode
-    if (m_mode == Game || m_mode == Button || m_mode == Camera) {
+    // Block OS close button for game/button/ultrasonic mode
+    if (m_mode == Game || m_mode == Button || m_mode == Camera || m_mode == Ultrasonic) {
         setWindowFlags(windowFlags() & ~Qt::WindowCloseButtonHint);
     }
 
@@ -59,6 +70,8 @@ DismissDialog::DismissDialog(const QStringList &alarmTimes,
         buildGameUi(alarmTimes);
     } else if (m_mode == Camera) {
         buildCameraUi(alarmTimes);
+    } else if (m_mode == Ultrasonic) {
+        buildUltrasonicUi(alarmTimes);
     } else {
         buildButtonUi(alarmTimes);
     }
@@ -66,6 +79,10 @@ DismissDialog::DismissDialog(const QStringList &alarmTimes,
 
 DismissDialog::~DismissDialog()
 {
+    if (m_usWatcher) {
+        delete m_usWatcher;
+        m_usWatcher = nullptr;
+    }
     if (m_cameraThread) {
         m_cameraThread->stop();
         delete m_cameraThread;
@@ -80,7 +97,7 @@ QString DismissDialog::capturedPhotoPath() const
 
 void DismissDialog::closeEvent(QCloseEvent *event)
 {
-    if (m_mode == Game || m_mode == Button || m_mode == Camera) {
+    if (m_mode == Game || m_mode == Button || m_mode == Camera || m_mode == Ultrasonic) {
         event->ignore();
     } else {
         event->accept();
@@ -89,7 +106,7 @@ void DismissDialog::closeEvent(QCloseEvent *event)
 
 void DismissDialog::reject()
 {
-    if (m_mode == Game || m_mode == Button || m_mode == Camera) {
+    if (m_mode == Game || m_mode == Button || m_mode == Camera || m_mode == Ultrasonic) {
         return;
     }
     QDialog::reject();
@@ -707,4 +724,271 @@ void DismissDialog::onButtonGameFailure()
                 "QLabel { font-size: 15px; font-weight: 600; color: #2d7dff; }");
         }
     });
+}
+
+// ── Ultrasonic dismiss UI ─────────────────────────────────────────────────────
+//
+// Corner layout (sensor index 0-based → shown as 1-4 to the user):
+//
+//   [Sensor 1] ─── [Sensor 2]        (top-left, top-right)
+//       │                 │
+//   [Sensor 3] ─── [Sensor 4]        (bottom-left, bottom-right)
+//
+// The screen shows a random 4-step sequence. The user holds a hand near the
+// indicated sensor for 0.5 s. If the same sensor appears consecutively, the
+// user must first remove their hand (distance > FAR_CM) and bring it back.
+
+void DismissDialog::buildUltrasonicUi(const QStringList &alarmTimes)
+{
+    setFixedSize(560, 500);
+
+    // ── Generate random 4-step sequence (values 0-3, repetitions allowed) ──
+    QList<int> pool = { 0, 1, 2, 3 };
+    for (int i = pool.size() - 1; i > 0; --i) {
+        int j = static_cast<int>(QRandomGenerator::global()->bounded(static_cast<quint32>(i + 1)));
+        pool.swapItemsAt(i, j);
+    }
+    for (int i = 0; i < 4; ++i)
+        m_usSeq[i] = pool.at(i);
+
+    m_usStep        = 0;
+    m_usNeedRelease = false;
+    m_usHolding     = false;
+
+    // ── Layout ──────────────────────────────────────────────────────────────
+    QVBoxLayout *root = new QVBoxLayout(this);
+    root->setContentsMargins(20, 14, 20, 14);
+    root->setSpacing(6);
+
+    QLabel *titleLabel = new QLabel("Alarm is ringing!", this);
+    titleLabel->setAlignment(Qt::AlignCenter);
+    titleLabel->setStyleSheet("QLabel { font-size: 20px; font-weight: 700; color: #ff6666; }");
+    root->addWidget(titleLabel);
+
+    QLabel *timesLabel = new QLabel(alarmTimes.join("  /  "), this);
+    timesLabel->setAlignment(Qt::AlignCenter);
+    timesLabel->setStyleSheet("QLabel { font-size: 13px; color: #aaaaaa; }");
+    root->addWidget(timesLabel);
+
+    QLabel *instrLabel = new QLabel(
+        "Hold hand near the sensor shown (0.5 s). Same sensor twice = remove hand first.", this);
+    instrLabel->setAlignment(Qt::AlignCenter);
+    instrLabel->setWordWrap(true);
+    instrLabel->setStyleSheet("QLabel { font-size: 12px; color: #888888; }");
+    root->addWidget(instrLabel);
+
+    // ── Sequence boxes ───────────────────────────────────────────────────────
+    QHBoxLayout *seqRow = new QHBoxLayout();
+    seqRow->setSpacing(10);
+    seqRow->addStretch();
+    for (int i = 0; i < 4; ++i) {
+        QLabel *lbl = new QLabel(QString::number(m_usSeq[i] + 1), this);
+        lbl->setAlignment(Qt::AlignCenter);
+        lbl->setFixedSize(60, 48);
+        lbl->setStyleSheet(
+            "QLabel { font-size: 22px; font-weight: 800; color: #cccccc;"
+            "  background: #2c2c2c; border: 1px solid #555; border-radius: 10px; }");
+        m_usStepLabels[i] = lbl;
+        seqRow->addWidget(lbl);
+    }
+    seqRow->addStretch();
+    root->addLayout(seqRow);
+
+    // ── Big sensor number ────────────────────────────────────────────────────
+    m_usTargetLabel = new QLabel(QString::number(m_usSeq[0] + 1), this);
+    m_usTargetLabel->setAlignment(Qt::AlignCenter);
+    m_usTargetLabel->setFixedHeight(110);
+    m_usTargetLabel->setStyleSheet(
+        "QLabel { font-size: 80px; font-weight: 900; color: #2d7dff; }");
+    root->addWidget(m_usTargetLabel);
+
+    // ── Progress label ───────────────────────────────────────────────────────
+    m_usProgressLabel = new QLabel("Step 1 / 4", this);
+    m_usProgressLabel->setAlignment(Qt::AlignCenter);
+    m_usProgressLabel->setStyleSheet(
+        "QLabel { font-size: 16px; font-weight: 700; color: #cccccc; }");
+    root->addWidget(m_usProgressLabel);
+
+    // ── Status/instruction label ─────────────────────────────────────────────
+    m_usStatusLabel = new QLabel(
+        QString("Bring hand near Sensor %1").arg(m_usSeq[0] + 1), this);
+    m_usStatusLabel->setAlignment(Qt::AlignCenter);
+    m_usStatusLabel->setWordWrap(true);
+    m_usStatusLabel->setFixedHeight(44);
+    m_usStatusLabel->setStyleSheet(
+        "QLabel { font-size: 15px; font-weight: 600; color: #2d7dff; }");
+    root->addWidget(m_usStatusLabel);
+
+    // ── Corner layout diagram ────────────────────────────────────────────────
+    QLabel *diagramLabel = new QLabel(
+        "[1] ─── [2]\n │         │\n[3] ─── [4]", this);
+    diagramLabel->setAlignment(Qt::AlignCenter);
+    diagramLabel->setStyleSheet(
+        "QLabel { font-size: 13px; font-family: monospace; color: #666666; }");
+    root->addWidget(diagramLabel);
+
+    // ── Live distance readouts ───────────────────────────────────────────────
+    QHBoxLayout *distRow = new QHBoxLayout();
+    distRow->setSpacing(8);
+    distRow->addStretch();
+    for (int i = 0; i < 4; ++i) {
+        QLabel *lbl = new QLabel(QString("S%1:--").arg(i + 1), this);
+        lbl->setAlignment(Qt::AlignCenter);
+        lbl->setFixedSize(78, 28);
+        lbl->setStyleSheet(
+            "QLabel { font-size: 12px; color: #888888;"
+            "  background: #1e1e1e; border: 1px solid #444; border-radius: 6px; }");
+        m_usDistLabels[i] = lbl;
+        distRow->addWidget(lbl);
+    }
+    distRow->addStretch();
+    root->addLayout(distRow);
+
+    // Highlight step 0 immediately
+    usAdvanceToStep(0);
+
+    // ── Start the watcher ────────────────────────────────────────────────────
+    m_usWatcher = new UltrasonicWatcher(this);
+    connect(m_usWatcher, &UltrasonicWatcher::distancesRead,
+            this, &DismissDialog::onUltrasonicDistances);
+}
+
+// Helper: update step-box highlighting and target/progress labels
+void DismissDialog::usAdvanceToStep(int step)
+{
+    const QString activeStyle =
+        "QLabel { font-size: 22px; font-weight: 800; color: #111111;"
+        "  background: #2d7dff; border: 1px solid #3a8cff; border-radius: 10px; }";
+    const QString doneStyle =
+        "QLabel { font-size: 22px; font-weight: 800; color: #111111;"
+        "  background: #46a446; border: 1px solid #55b755; border-radius: 10px; }";
+    const QString pendingStyle =
+        "QLabel { font-size: 22px; font-weight: 800; color: #cccccc;"
+        "  background: #2c2c2c; border: 1px solid #555; border-radius: 10px; }";
+
+    for (int i = 0; i < 4; ++i) {
+        if (!m_usStepLabels[i]) continue;
+        if (i < step)
+            m_usStepLabels[i]->setStyleSheet(doneStyle);
+        else if (i == step)
+            m_usStepLabels[i]->setStyleSheet(activeStyle);
+        else
+            m_usStepLabels[i]->setStyleSheet(pendingStyle);
+    }
+
+    if (m_usTargetLabel)
+        m_usTargetLabel->setText(QString::number(m_usSeq[step] + 1));
+    if (m_usProgressLabel)
+        m_usProgressLabel->setText(QString("Step %1 / 4").arg(step + 1));
+}
+
+// ── Ultrasonic state machine ──────────────────────────────────────────────────
+void DismissDialog::onUltrasonicDistances(QVector<int> distances)
+{
+    static const int NEAR_CM = 15;   // hand is "near" when distance < 15 cm
+    static const int FAR_CM  = 20;   // hand is "away"  when distance > 20 cm (hysteresis)
+    static const int HOLD_MS = 500;  // must hold near for 500 ms
+
+    if (m_usStep >= 4) return;
+
+    // ── Update live distance labels ──────────────────────────────────────────
+    for (int i = 0; i < 4; ++i) {
+        if (!m_usDistLabels[i]) continue;
+        const int d = (i < distances.size()) ? distances[i] : -1;
+        m_usDistLabels[i]->setText(
+            d < 0 ? QString("S%1:ERR").arg(i + 1)
+                  : QString("S%1:%2cm").arg(i + 1).arg(d));
+        m_usDistLabels[i]->setStyleSheet(
+            (d > 0 && d < NEAR_CM)
+                ? "QLabel { font-size:12px; color:#111; background:#2d7dff;"
+                  "  border:1px solid #3a8cff; border-radius:6px; }"
+                : "QLabel { font-size:12px; color:#888888; background:#1e1e1e;"
+                  "  border:1px solid #444; border-radius:6px; }");
+    }
+
+    const int sensorIdx = m_usSeq[m_usStep];
+    const int dist      = (sensorIdx < distances.size()) ? distances[sensorIdx] : -1;
+    const bool isNear   = (dist > 0 && dist < NEAR_CM);
+    const bool isFar    = (dist < 0 || dist >= FAR_CM);
+
+    // ── Wait-for-release phase (same sensor repeated) ────────────────────────
+    if (m_usNeedRelease) {
+        if (isFar) {
+            m_usNeedRelease = false;
+            m_usHolding     = false;
+            if (m_usStatusLabel)
+                m_usStatusLabel->setText(
+                    QString("Step %1/4  ·  Bring hand near Sensor %2")
+                    .arg(m_usStep + 1).arg(sensorIdx + 1));
+        } else {
+            if (m_usStatusLabel)
+                m_usStatusLabel->setText(
+                    QString("Step %1/4  ·  Remove hand, then bring near Sensor %2")
+                    .arg(m_usStep + 1).arg(sensorIdx + 1));
+        }
+        return;
+    }
+
+    // ── Hold phase ───────────────────────────────────────────────────────────
+    if (isNear) {
+        if (!m_usHolding) {
+            // Start of a new hold
+            m_usHolding = true;
+            m_usHoldTimer.restart();
+            if (m_usStatusLabel)
+                m_usStatusLabel->setText(
+                    QString("Step %1/4  ·  Hold Sensor %2 ... keep still!")
+                    .arg(m_usStep + 1).arg(sensorIdx + 1));
+        } else {
+            const qint64 elapsed = m_usHoldTimer.elapsed();
+            if (elapsed >= HOLD_MS) {
+                // ── Step recognised! ────────────────────────────────────────
+                if (m_usStepLabels[m_usStep]) {
+                    m_usStepLabels[m_usStep]->setStyleSheet(
+                        "QLabel { font-size:22px; font-weight:800; color:#111;"
+                        "  background:#46a446; border:1px solid #55b755; border-radius:10px; }");
+                }
+
+                ++m_usStep;
+
+                if (m_usStep >= 4) {
+                    accept();
+                    return;
+                }
+
+                // Prepare next step
+                const bool sameAsPrev = (m_usSeq[m_usStep] == m_usSeq[m_usStep - 1]);
+                m_usNeedRelease = sameAsPrev;
+                m_usHolding     = false;
+
+                usAdvanceToStep(m_usStep);
+
+                const int nextSensor = m_usSeq[m_usStep];
+                if (m_usStatusLabel) {
+                    m_usStatusLabel->setText(
+                        sameAsPrev
+                        ? QString("Step %1/4  ·  Remove hand, then bring near Sensor %2")
+                          .arg(m_usStep + 1).arg(nextSensor + 1)
+                        : QString("Step %1/4  ·  Bring hand near Sensor %2")
+                          .arg(m_usStep + 1).arg(nextSensor + 1));
+                }
+            } else {
+                // Still building up hold — show percentage
+                const int pct = static_cast<int>(elapsed * 100 / HOLD_MS);
+                if (m_usStatusLabel)
+                    m_usStatusLabel->setText(
+                        QString("Step %1/4  ·  Holding %2%  keep still!")
+                        .arg(m_usStep + 1).arg(pct));
+            }
+        }
+    } else {
+        // Hand moved away — reset hold
+        if (m_usHolding) {
+            m_usHolding = false;
+            if (m_usStatusLabel)
+                m_usStatusLabel->setText(
+                    QString("Step %1/4  ·  Bring hand near Sensor %2")
+                    .arg(m_usStep + 1).arg(sensorIdx + 1));
+        }
+    }
 }

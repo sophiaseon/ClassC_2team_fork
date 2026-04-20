@@ -21,7 +21,8 @@ public:
         DismissSimple = 0,
         DismissGame = 1,
         DismissButton = 2,
-        DismissCamera = 3
+        DismissCamera = 3,
+        DismissUltrasonic = 4
     };
 
     enum GameType {
@@ -107,6 +108,7 @@ private:
     QPushButton *m_gameModeBtn;
     QPushButton *m_buttonModeBtn;
     QPushButton *m_cameraModeBtn;
+    QPushButton *m_ultrasonicModeBtn;
 };
 
 #endif // ALARMDIALOG_H

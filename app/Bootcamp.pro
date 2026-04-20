@@ -13,7 +13,8 @@ SOURCES += \
     gameengine.cpp \
     main.cpp \
     mainwindow.cpp \
-    statdialog.cpp
+    statdialog.cpp \
+    ultrasonicwatcher.cpp
 
 HEADERS += \
     alarmdialog.h \
@@ -22,4 +23,5 @@ HEADERS += \
     dismissdialog.h \
     gameengine.h \
     mainwindow.h \
-    statdialog.h
+    statdialog.h \
+    ultrasonicwatcher.h
