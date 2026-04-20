@@ -286,7 +286,6 @@ void MainWindow::sortAlarmsByTime()
 {
     std::sort(m_alarms.begin(), m_alarms.end(),
               [](const AlarmEntry &a, const AlarmEntry &b) {
-                  if (a.enabled != b.enabled) return a.enabled > b.enabled;
                   return a.dateTime < b.dateTime;
               });
 }
