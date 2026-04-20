@@ -5,10 +5,12 @@
 #include <QElapsedTimer>
 #include <QList>
 #include <QStringList>
+#include <QVector>
 
 #include "gameengine.h"
 
 class AlarmCameraThread;
+class UltrasonicWatcher;
 class QLabel;
 class QPushButton;
 
@@ -17,7 +19,7 @@ class DismissDialog : public QDialog
     Q_OBJECT
 
 public:
-    enum Mode { Simple, Game, Button, Camera };
+    enum Mode { Simple, Game, Button, Camera, Ultrasonic };
     enum GameType { NumberOrder = 0, ColorMemory = 1 };
 
     explicit DismissDialog(const QStringList &alarmTimes,
@@ -45,6 +47,7 @@ private slots:
     void onButtonGameCountdownUpdated(int secondsLeft);
     void onButtonGameSuccess();
     void onButtonGameFailure();
+    void onUltrasonicDistances(QVector<int> distances);
 
 private:
     void buildSimpleUi(const QStringList &alarmTimes);
@@ -53,6 +56,8 @@ private:
     void buildColorMemoryGameUi(const QStringList &alarmTimes);
     void buildButtonUi(const QStringList &alarmTimes);
     void buildCameraUi(const QStringList &alarmTimes);
+    void buildUltrasonicUi(const QStringList &alarmTimes);
+    void usAdvanceToStep(int step);  // update UI + state for next us step
 
     void startColorMemoryRound();
     void showColorMemoryStep();
@@ -87,6 +92,19 @@ private:
     QLabel            *m_btnTargetLabel;     // "N / target"
     QLabel            *m_btnCountdownLabel;  // seconds left
     QLabel            *m_btnStatusLabel;     // status message
+
+    // Ultrasonic dismiss mode
+    UltrasonicWatcher *m_usWatcher;
+    int                m_usSeq[4];           // target sensor index (0-3) for each of the 4 steps
+    int                m_usStep;             // current step (0-3)
+    bool               m_usNeedRelease;      // must remove hand before hold counts
+    bool               m_usHolding;          // hand is currently near the sensor
+    QElapsedTimer      m_usHoldTimer;        // measures continuous hold duration
+    QLabel            *m_usTargetLabel;      // big sensor number display
+    QLabel            *m_usProgressLabel;    // "Step X / 4"
+    QLabel            *m_usStatusLabel;      // instruction / status text
+    QLabel            *m_usStepLabels[4];    // sequence boxes (highlight current)
+    QLabel            *m_usDistLabels[4];    // live distance readouts
 
     QElapsedTimer      m_actionTimer;
 };

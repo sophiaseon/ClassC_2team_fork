@@ -472,11 +472,12 @@ void MainWindow::updateCurrentTime()
         }
     }
 
-    // Collect alarm times and determine mode priority: Camera > Button > Game > Simple
+    // Collect alarm times and determine mode priority: Camera > Button > Ultrasonic > Game > Simple
     QStringList alarmTimes;
-    bool needGame = false;
-    bool needButton = false;
-    bool needCamera = false;
+    bool needGame       = false;
+    bool needButton     = false;
+    bool needCamera     = false;
+    bool needUltrasonic = false;
     DismissDialog::GameType selectedGameType = DismissDialog::NumberOrder;
     for (const TriggeredInfo &t : triggered) {
         alarmTimes << t.alarmTime;
@@ -486,14 +487,16 @@ void MainWindow::updateCurrentTime()
                 ? DismissDialog::ColorMemory
                 : DismissDialog::NumberOrder;
         }
-        if (t.dismissMode == AlarmDialog::DismissButton) needButton = true;
-        if (t.dismissMode == AlarmDialog::DismissCamera) needCamera = true;
+        if (t.dismissMode == AlarmDialog::DismissButton)     needButton     = true;
+        if (t.dismissMode == AlarmDialog::DismissCamera)     needCamera     = true;
+        if (t.dismissMode == AlarmDialog::DismissUltrasonic) needUltrasonic = true;
     }
 
     DismissDialog::Mode dlgMode = DismissDialog::Simple;
-    if (needCamera) dlgMode = DismissDialog::Camera;
-    else if (needButton) dlgMode = DismissDialog::Button;
-    else if (needGame) dlgMode = DismissDialog::Game;
+    if (needCamera)         dlgMode = DismissDialog::Camera;
+    else if (needButton)    dlgMode = DismissDialog::Button;
+    else if (needUltrasonic) dlgMode = DismissDialog::Ultrasonic;
+    else if (needGame)      dlgMode = DismissDialog::Game;
 
     // Show appropriate dismiss dialog
     int dlgAlarmId = -1;
