@@ -33,6 +33,9 @@
 #include <QTimer>
 #include <QVBoxLayout>
 #include <QWidget>
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonObject>
 
 namespace {
 
@@ -111,6 +114,7 @@ MainWindow::MainWindow(QWidget *parent)
     m_actionTimer.start();
 
     loadAlarmCounter();
+    loadAlarms();
 
     connect(m_clockTimer,         &QTimer::timeout,     this, &MainWindow::updateCurrentTime);
     connect(m_exitButton,         &QPushButton::clicked, this, &MainWindow::close);
@@ -573,6 +577,7 @@ void MainWindow::updateCurrentTime()
         }
     }
 
+    saveAlarms();
     refreshAlarmList();
 
     // Stop player / buzzer
@@ -606,6 +611,7 @@ void MainWindow::openAddDialog()
     entry.logFile     = alarmLogPath(entry.alarmId);
     m_alarms.append(entry);
     saveAlarmCounter();
+    saveAlarms();
     sortAlarmsByTime();
     refreshAlarmList();
     for (int i = 0; i < m_alarms.size(); ++i) {
@@ -647,6 +653,7 @@ void MainWindow::openEditDialog()
     m_alarms[row].repeatMask  = dlg.repeatMask();
     m_alarms[row].useSpecificDate = dlg.useSpecificDate();
     sortAlarmsByTime();
+    saveAlarms();
     refreshAlarmList();
 }
 
@@ -659,6 +666,7 @@ void MainWindow::deleteSelectedAlarm()
     const int row = m_alarmListWidget->currentRow();
     if (row < 0 || row >= m_alarms.size()) return;
     m_alarms.removeAt(row);
+    saveAlarms();
     refreshAlarmList();
 }
 
@@ -781,6 +789,7 @@ void MainWindow::setDebugAlarmPlus5Sec()
     entry.logFile   = alarmLogPath(entry.alarmId);
     m_alarms.append(entry);
     saveAlarmCounter();
+    saveAlarms();
     sortAlarmsByTime();
     refreshAlarmList();
 }
@@ -837,4 +846,81 @@ void MainWindow::saveAlarmCounter()
         out << m_nextAlarmId;
         f.close();
     }
+}
+
+// ── saveAlarms / loadAlarms ───────────────────────────────────────────────────
+#define ALARMS_SAVE_FILE "/mnt/nfs/capture/alarms_save.json"
+
+void MainWindow::saveAlarms()
+{
+    QDir().mkpath("/mnt/nfs/capture");
+    QJsonArray arr;
+    for (const AlarmEntry &e : m_alarms) {
+        QJsonObject obj;
+        obj["alarmId"]         = e.alarmId;
+        obj["dateTime"]        = e.dateTime.toString(Qt::ISODate);
+        obj["enabled"]         = e.enabled;
+        obj["soundFile"]       = e.soundFile;
+        obj["dismissMode"]     = e.dismissMode;
+        obj["gameType"]        = e.gameType;
+        obj["repeatMask"]      = e.repeatMask;
+        obj["useSpecificDate"] = e.useSpecificDate;
+        obj["logFile"]         = e.logFile;
+        arr.append(obj);
+    }
+    QJsonDocument doc(arr);
+    QFile f(ALARMS_SAVE_FILE);
+    if (f.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+        f.write(doc.toJson(QJsonDocument::Compact));
+        f.close();
+    }
+}
+
+void MainWindow::loadAlarms()
+{
+    QFile f(ALARMS_SAVE_FILE);
+    if (!f.open(QIODevice::ReadOnly)) return;
+    const QByteArray data = f.readAll();
+    f.close();
+
+    QJsonParseError err;
+    const QJsonDocument doc = QJsonDocument::fromJson(data, &err);
+    if (err.error != QJsonParseError::NoError || !doc.isArray()) return;
+
+    const QDateTime now = QDateTime::currentDateTime();
+    const QJsonArray arr = doc.array();
+    for (const QJsonValue &val : arr) {
+        if (!val.isObject()) continue;
+        const QJsonObject obj = val.toObject();
+
+        AlarmEntry e;
+        e.alarmId         = obj["alarmId"].toInt();
+        e.dateTime        = QDateTime::fromString(obj["dateTime"].toString(), Qt::ISODate);
+        e.enabled         = obj["enabled"].toBool(true);
+        e.soundFile       = obj["soundFile"].toString("/mnt/nfs/test_contents/test.wav");
+        e.dismissMode     = obj["dismissMode"].toInt(0);
+        e.gameType        = obj["gameType"].toInt(0);
+        e.repeatMask      = obj["repeatMask"].toInt(0);
+        e.useSpecificDate = obj["useSpecificDate"].toBool(false);
+        e.logFile         = obj["logFile"].toString(alarmLogPath(e.alarmId));
+
+        if (!e.dateTime.isValid()) continue;
+
+        // Non-repeat alarms that have already passed: push to tomorrow
+        if (e.repeatMask == 0 && e.enabled && e.dateTime <= now) {
+            e.enabled = false;   // expired one-shot alarm — keep it but disabled
+        }
+        // Repeat alarms: advance to next valid occurrence
+        if (e.repeatMask != 0 && e.enabled && e.dateTime <= now) {
+            e.dateTime = computeNextRepeatDateTime(now, e.dateTime.time(), e.repeatMask);
+        }
+
+        m_alarms.append(e);
+        // Keep m_nextAlarmId ahead of all loaded IDs
+        if (e.alarmId >= m_nextAlarmId)
+            m_nextAlarmId = e.alarmId + 1;
+    }
+
+    sortAlarmsByTime();
+    refreshAlarmList();
 }

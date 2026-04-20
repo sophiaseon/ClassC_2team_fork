@@ -55,6 +55,8 @@ private:
     void stopBuzzer();
     void loadAlarmCounter();
     void saveAlarmCounter();
+    void saveAlarms();
+    void loadAlarms();
 
     static QString alarmLogPath(int alarmId)
     { return QString("/mnt/nfs/capture/alarm_%1.txt").arg(alarmId); }
