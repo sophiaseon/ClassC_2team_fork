@@ -6,10 +6,10 @@ CC := aarch64-linux-gnu-gcc
 
 default:
 	$(MAKE) -C $(KERNELDIR) M=$(PWD) modules
-#	$(CC) -Wall -o apptest apptest.c
+	$(CC) -Wall -o apptest apptest.c
 #	$(CC) -Wall -o ioctl_test ioctl_test.c
 #	cp luxtest.ko apptest ioctl_test /nfsroot
-	cp ultrasonic.ko /nfsroot
+	cp apptest ultrasonic.ko /nfsroot
 
 clean:
 	rm -f *.o *.ko *.mod *.mod.c modules.order Module.symvers
