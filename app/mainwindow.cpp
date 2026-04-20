@@ -208,7 +208,7 @@ void MainWindow::buildUi()
     m_debugPlus5SecButton = new QPushButton("+5s", this);
     m_debugPlus5SecButton->setFixedSize(72, 40);
     m_debugPlus5SecButton->setStyleSheet(
-        "QPushButton { font-size: 14px; font-weight: 700; color: white;"
+        "QPushButton { font-size: 17px; font-weight: 700; color: white;"
         "    background: #3a7a3a; border: none; border-radius: 8px; }"
         "QPushButton:pressed { background: #2c5f2c; }"
     );
@@ -216,7 +216,7 @@ void MainWindow::buildUi()
     m_statButton = new QPushButton("Stat", this);
     m_statButton->setFixedSize(72, 40);
     m_statButton->setStyleSheet(
-        "QPushButton { font-size: 14px; font-weight: 700; color: white;"
+        "QPushButton { font-size: 17px; font-weight: 700; color: white;"
         "    background: #7a5a3a; border: none; border-radius: 8px; }"
         "QPushButton:pressed { background: #5f4428; }"
     );
@@ -224,7 +224,7 @@ void MainWindow::buildUi()
     m_exitButton = new QPushButton("Exit", this);
     m_exitButton->setFixedSize(80, 40);
     m_exitButton->setStyleSheet(
-        "QPushButton { font-size: 15px; font-weight: 700; color: white;"
+        "QPushButton { font-size: 17px; font-weight: 700; color: white;"
         "    background: #cc3333; border: none; border-radius: 8px; }"
         "QPushButton:pressed { background: #992222; }"
     );
@@ -352,7 +352,7 @@ void MainWindow::refreshAlarmList()
         if (e.enabled) {
             enableBtn->setText("Disable");
             enableBtn->setStyleSheet(
-                "QPushButton { font-size: 12px; font-weight: 700; color: white;"
+                "QPushButton { font-size: 17px; font-weight: 700; color: white;"
                 "    background: #8b3a3a; border: none; border-radius: 8px; }"
                 "QPushButton:pressed { background: #6a2a2a; }"
             );
@@ -365,7 +365,7 @@ void MainWindow::refreshAlarmList()
         } else {
             enableBtn->setText("Enable");
             enableBtn->setStyleSheet(
-                "QPushButton { font-size: 12px; font-weight: 700; color: white;"
+                "QPushButton { font-size: 17px; font-weight: 700; color: white;"
                 "    background: #2d7dff; border: none; border-radius: 8px; }"
                 "QPushButton:pressed { background: #1d5fc7; }"
             );
@@ -397,7 +397,7 @@ void MainWindow::refreshAlarmList()
         QPushButton *statBtn = new QPushButton("Stat", rowWidget);
         statBtn->setFixedSize(52, 34);
         statBtn->setStyleSheet(
-            "QPushButton { font-size: 12px; font-weight: 700; color: white;"
+            "QPushButton { font-size: 17px; font-weight: 700; color: white;"
             "    background: #7a5a3a; border: none; border-radius: 8px; }"
             "QPushButton:pressed { background: #5f4428; }"
         );
