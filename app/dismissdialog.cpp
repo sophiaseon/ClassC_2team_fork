@@ -363,7 +363,7 @@ void DismissDialog::buildColorMemoryGameUi(const QStringList &alarmTimes)
 
 void DismissDialog::startColorMemoryRound()
 {
-    static const int roundLengths[3] = { 6, 6, 6 };  // 모든 라운드 6회로 통일
+    static const int roundLengths[3] = { 4, 4, 4 };
 
     if (m_colorRound >= 3) {
         accept();
@@ -399,7 +399,6 @@ void DismissDialog::showColorMemoryStep()
         m_showingSequence = false;
         m_colorInputIndex = 0;
         m_colorStatusLabel->setText("Now repeat the sequence");
-        m_colorPreviewLabel->setText("INPUT");
         setPreviewColor(-1, false);
         for (int i = 0; i < 4; ++i) {
             if (m_colorButtons[i]) m_colorButtons[i]->setEnabled(true);
@@ -410,7 +409,7 @@ void DismissDialog::showColorMemoryStep()
     const int color = m_colorSequence[m_colorShowIndex];
     setPreviewColor(color, true);
 
-    QTimer::singleShot(500, this, [this]() {  // 색 표시 시간 0.5초
+    QTimer::singleShot(700, this, [this]() {  // 색 표시 시간 0.7초
         setPreviewColor(-1, false);
         ++m_colorShowIndex;
         QTimer::singleShot(160, this, &DismissDialog::showColorMemoryStep);
