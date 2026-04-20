@@ -1,1 +1,1 @@
-cmd_/home/user/work/practice_dd/EX02-02_std_key/modules.order := {   echo /home/user/work/practice_dd/EX02-02_std_key/devtest.ko; :; } > /home/user/work/practice_dd/EX02-02_std_key/modules.order
+savedcmd_/media/sf_share/ClassC_2team/device_driver/button/modules.order := {   echo /media/sf_share/ClassC_2team/device_driver/button/devtest.o; :; } > /media/sf_share/ClassC_2team/device_driver/button/modules.order

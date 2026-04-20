@@ -1,0 +1,1 @@
+savedcmd_/media/sf_share/ClassC_2team/device_driver/lux/luxtest.mod := printf '%s\n'   luxtest.o | awk '!x[$$0]++ { print("/media/sf_share/ClassC_2team/device_driver/lux/"$$0) }' > /media/sf_share/ClassC_2team/device_driver/lux/luxtest.mod

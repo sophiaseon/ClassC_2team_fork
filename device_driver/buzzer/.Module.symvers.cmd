@@ -1,1 +1,1 @@
-cmd_/home/user/AA/ClassC_2team/device_driver/buzzer/Module.symvers :=  sed 's/ko$$/o/'  /home/user/AA/ClassC_2team/device_driver/buzzer/modules.order | scripts/mod/modpost -m -a    -o /home/user/AA/ClassC_2team/device_driver/buzzer/Module.symvers -e -i Module.symvers -T - 
+savedcmd_/media/sf_share/ClassC_2team/device_driver/buzzer/Module.symvers :=  scripts/mod/modpost -M        -o /media/sf_share/ClassC_2team/device_driver/buzzer/Module.symvers -T /media/sf_share/ClassC_2team/device_driver/buzzer/modules.order -i Module.symvers -e 

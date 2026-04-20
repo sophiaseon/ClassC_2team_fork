@@ -1,8 +1,8 @@
-savedcmd_/media/sf_share/ClassC_2team/device_driver/button/devtest.o := aarch64-linux-gnu-gcc -Wp,-MMD,/media/sf_share/ClassC_2team/device_driver/button/.devtest.o.d -nostdinc -I./arch/arm64/include -I./arch/arm64/include/generated  -I./include -I./arch/arm64/include/uapi -I./arch/arm64/include/generated/uapi -I./include/uapi -I./include/generated/uapi -include ./include/linux/compiler-version.h -include ./include/linux/kconfig.h -include ./include/linux/compiler_types.h -D__KERNEL__ -mlittle-endian -DKASAN_SHADOW_SCALE_SHIFT= -std=gnu11 -fshort-wchar -funsigned-char -fno-common -fno-PIE -fno-strict-aliasing -mgeneral-regs-only -Wno-psabi -mabi=lp64 -fno-asynchronous-unwind-tables -fno-unwind-tables -msign-return-address=non-leaf -Wa,-march=armv8.3-a -DARM64_ASM_ARCH='"armv8.3-a"' -DKASAN_SHADOW_SCALE_SHIFT= -fno-delete-null-pointer-checks -O2 --param=allow-store-data-races=0 -fstack-protector-strong -fno-omit-frame-pointer -fno-optimize-sibling-calls -falign-functions=4 -fno-strict-overflow -fno-stack-check -fconserve-stack -fno-builtin-wcslen -fno-builtin-wcslen -Wall -Wextra -Wundef -Werror=implicit-function-declaration -Werror=implicit-int -Werror=return-type -Werror=strict-prototypes -Wno-format-security -Wno-trigraphs -Wno-frame-address -Wmissing-declarations -Wmissing-prototypes -Wframe-larger-than=2048 -Wno-main -Wvla -Wno-pointer-sign -Wno-stringop-overflow -Wimplicit-fallthrough=5 -Werror=date-time -Werror=incompatible-pointer-types -Werror=designated-init -Wunused -Wno-unused-but-set-variable -Wno-unused-const-variable -Wno-format-overflow -Wno-format-truncation -Wno-override-init -Wno-missing-field-initializers -Wno-type-limits -Wno-shift-negative-value -Wno-maybe-uninitialized -Wno-sign-compare -Wno-unused-parameter -g -fno-var-tracking -femit-struct-debug-baseonly  -DMODULE  -DKBUILD_BASENAME='"devtest"' -DKBUILD_MODNAME='"devtest"' -D__KBUILD_MODNAME=kmod_devtest -c -o /media/sf_share/ClassC_2team/device_driver/button/devtest.o /media/sf_share/ClassC_2team/device_driver/button/devtest.c  
+savedcmd_/media/sf_share/ClassC_2team/device_driver/lux/luxtest.o := aarch64-linux-gnu-gcc -Wp,-MMD,/media/sf_share/ClassC_2team/device_driver/lux/.luxtest.o.d -nostdinc -I./arch/arm64/include -I./arch/arm64/include/generated  -I./include -I./arch/arm64/include/uapi -I./arch/arm64/include/generated/uapi -I./include/uapi -I./include/generated/uapi -include ./include/linux/compiler-version.h -include ./include/linux/kconfig.h -include ./include/linux/compiler_types.h -D__KERNEL__ -mlittle-endian -DKASAN_SHADOW_SCALE_SHIFT= -std=gnu11 -fshort-wchar -funsigned-char -fno-common -fno-PIE -fno-strict-aliasing -mgeneral-regs-only -Wno-psabi -mabi=lp64 -fno-asynchronous-unwind-tables -fno-unwind-tables -msign-return-address=non-leaf -Wa,-march=armv8.3-a -DARM64_ASM_ARCH='"armv8.3-a"' -DKASAN_SHADOW_SCALE_SHIFT= -fno-delete-null-pointer-checks -O2 --param=allow-store-data-races=0 -fstack-protector-strong -fno-omit-frame-pointer -fno-optimize-sibling-calls -falign-functions=4 -fno-strict-overflow -fno-stack-check -fconserve-stack -fno-builtin-wcslen -fno-builtin-wcslen -Wall -Wextra -Wundef -Werror=implicit-function-declaration -Werror=implicit-int -Werror=return-type -Werror=strict-prototypes -Wno-format-security -Wno-trigraphs -Wno-frame-address -Wmissing-declarations -Wmissing-prototypes -Wframe-larger-than=2048 -Wno-main -Wvla -Wno-pointer-sign -Wno-stringop-overflow -Wimplicit-fallthrough=5 -Werror=date-time -Werror=incompatible-pointer-types -Werror=designated-init -Wunused -Wno-unused-but-set-variable -Wno-unused-const-variable -Wno-format-overflow -Wno-format-truncation -Wno-override-init -Wno-missing-field-initializers -Wno-type-limits -Wno-shift-negative-value -Wno-maybe-uninitialized -Wno-sign-compare -Wno-unused-parameter -g -fno-var-tracking -femit-struct-debug-baseonly  -DMODULE  -DKBUILD_BASENAME='"luxtest"' -DKBUILD_MODNAME='"luxtest"' -D__KBUILD_MODNAME=kmod_luxtest -c -o /media/sf_share/ClassC_2team/device_driver/lux/luxtest.o /media/sf_share/ClassC_2team/device_driver/lux/luxtest.c  
 
-source_/media/sf_share/ClassC_2team/device_driver/button/devtest.o := /media/sf_share/ClassC_2team/device_driver/button/devtest.c
+source_/media/sf_share/ClassC_2team/device_driver/lux/luxtest.o := /media/sf_share/ClassC_2team/device_driver/lux/luxtest.c
 
-deps_/media/sf_share/ClassC_2team/device_driver/button/devtest.o := \
+deps_/media/sf_share/ClassC_2team/device_driver/lux/luxtest.o := \
   include/linux/compiler-version.h \
     $(wildcard include/config/CC_VERSION_TEXT) \
   include/linux/kconfig.h \
@@ -33,9 +33,38 @@ deps_/media/sf_share/ClassC_2team/device_driver/button/devtest.o := \
     $(wildcard include/config/ARM64_PTR_AUTH_KERNEL) \
     $(wildcard include/config/ARM64_PTR_AUTH) \
     $(wildcard include/config/BUILTIN_RETURN_ADDRESS_STRIPS_PAC) \
-  include/linux/init.h \
-    $(wildcard include/config/MEMORY_HOTPLUG) \
-    $(wildcard include/config/HAVE_ARCH_PREL32_RELOCATIONS) \
+  include/linux/module.h \
+    $(wildcard include/config/MODULES) \
+    $(wildcard include/config/SYSFS) \
+    $(wildcard include/config/MODULES_TREE_LOOKUP) \
+    $(wildcard include/config/LIVEPATCH) \
+    $(wildcard include/config/STACKTRACE_BUILD_ID) \
+    $(wildcard include/config/ARCH_USES_CFI_TRAPS) \
+    $(wildcard include/config/MODULE_SIG) \
+    $(wildcard include/config/GENERIC_BUG) \
+    $(wildcard include/config/KALLSYMS) \
+    $(wildcard include/config/SMP) \
+    $(wildcard include/config/TRACEPOINTS) \
+    $(wildcard include/config/TREE_SRCU) \
+    $(wildcard include/config/BPF_EVENTS) \
+    $(wildcard include/config/DEBUG_INFO_BTF_MODULES) \
+    $(wildcard include/config/JUMP_LABEL) \
+    $(wildcard include/config/TRACING) \
+    $(wildcard include/config/EVENT_TRACING) \
+    $(wildcard include/config/FTRACE_MCOUNT_RECORD) \
+    $(wildcard include/config/KPROBES) \
+    $(wildcard include/config/HAVE_STATIC_CALL_INLINE) \
+    $(wildcard include/config/KUNIT) \
+    $(wildcard include/config/PRINTK_INDEX) \
+    $(wildcard include/config/MODULE_UNLOAD) \
+    $(wildcard include/config/MITIGATION_ITS) \
+    $(wildcard include/config/CONSTRUCTORS) \
+    $(wildcard include/config/FUNCTION_ERROR_INJECTION) \
+    $(wildcard include/config/DYNAMIC_DEBUG_CORE) \
+  include/linux/list.h \
+    $(wildcard include/config/LIST_HARDENED) \
+    $(wildcard include/config/DEBUG_LIST) \
+  include/linux/container_of.h \
   include/linux/build_bug.h \
   include/linux/compiler.h \
     $(wildcard include/config/TRACE_BRANCH_PROFILING) \
@@ -71,39 +100,6 @@ deps_/media/sf_share/ClassC_2team/device_driver/button/devtest.o := \
   include/linux/kcsan-checks.h \
     $(wildcard include/config/KCSAN_WEAK_MEMORY) \
     $(wildcard include/config/KCSAN_IGNORE_ATOMICS) \
-  include/linux/stringify.h \
-  include/linux/module.h \
-    $(wildcard include/config/MODULES) \
-    $(wildcard include/config/SYSFS) \
-    $(wildcard include/config/MODULES_TREE_LOOKUP) \
-    $(wildcard include/config/LIVEPATCH) \
-    $(wildcard include/config/STACKTRACE_BUILD_ID) \
-    $(wildcard include/config/ARCH_USES_CFI_TRAPS) \
-    $(wildcard include/config/MODULE_SIG) \
-    $(wildcard include/config/GENERIC_BUG) \
-    $(wildcard include/config/KALLSYMS) \
-    $(wildcard include/config/SMP) \
-    $(wildcard include/config/TRACEPOINTS) \
-    $(wildcard include/config/TREE_SRCU) \
-    $(wildcard include/config/BPF_EVENTS) \
-    $(wildcard include/config/DEBUG_INFO_BTF_MODULES) \
-    $(wildcard include/config/JUMP_LABEL) \
-    $(wildcard include/config/TRACING) \
-    $(wildcard include/config/EVENT_TRACING) \
-    $(wildcard include/config/FTRACE_MCOUNT_RECORD) \
-    $(wildcard include/config/KPROBES) \
-    $(wildcard include/config/HAVE_STATIC_CALL_INLINE) \
-    $(wildcard include/config/KUNIT) \
-    $(wildcard include/config/PRINTK_INDEX) \
-    $(wildcard include/config/MODULE_UNLOAD) \
-    $(wildcard include/config/MITIGATION_ITS) \
-    $(wildcard include/config/CONSTRUCTORS) \
-    $(wildcard include/config/FUNCTION_ERROR_INJECTION) \
-    $(wildcard include/config/DYNAMIC_DEBUG_CORE) \
-  include/linux/list.h \
-    $(wildcard include/config/LIST_HARDENED) \
-    $(wildcard include/config/DEBUG_LIST) \
-  include/linux/container_of.h \
   include/linux/poison.h \
     $(wildcard include/config/ILLEGAL_POINTER_VALUE) \
   include/linux/const.h \
@@ -134,6 +130,7 @@ deps_/media/sf_share/ClassC_2team/device_driver/button/devtest.o := \
   arch/arm64/include/generated/asm/cpucap-defs.h \
   arch/arm64/include/asm/insn-def.h \
   arch/arm64/include/asm/brk-imm.h \
+  include/linux/stringify.h \
   include/asm-generic/barrier.h \
   include/linux/stat.h \
   arch/arm64/include/asm/stat.h \
@@ -182,6 +179,9 @@ deps_/media/sf_share/ClassC_2team/device_driver/button/devtest.o := \
     $(wildcard include/config/ARCH_USE_SYM_ANNOTATIONS) \
   arch/arm64/include/asm/linkage.h \
   arch/arm64/include/asm/alternative.h \
+  include/linux/init.h \
+    $(wildcard include/config/MEMORY_HOTPLUG) \
+    $(wildcard include/config/HAVE_ARCH_PREL32_RELOCATIONS) \
   arch/arm64/include/asm/atomic_lse.h \
   include/linux/atomic/atomic-arch-fallback.h \
     $(wildcard include/config/GENERIC_ATOMIC64) \
@@ -966,7 +966,47 @@ deps_/media/sf_share/ClassC_2team/device_driver/button/devtest.o := \
     $(wildcard include/config/HAVE_MOD_ARCH_SPECIFIC) \
     $(wildcard include/config/MODULES_USE_ELF_REL) \
     $(wildcard include/config/MODULES_USE_ELF_RELA) \
-  include/linux/cdev.h \
+  include/linux/i2c.h \
+    $(wildcard include/config/I2C) \
+    $(wildcard include/config/I2C_SLAVE) \
+    $(wildcard include/config/I2C_BOARDINFO) \
+    $(wildcard include/config/I2C_MUX) \
+    $(wildcard include/config/OF) \
+    $(wildcard include/config/ACPI) \
+  include/linux/acpi.h \
+    $(wildcard include/config/ACPI_TABLE_LIB) \
+    $(wildcard include/config/ACPI_DEBUGGER) \
+    $(wildcard include/config/X86) \
+    $(wildcard include/config/LOONGARCH) \
+    $(wildcard include/config/RISCV) \
+    $(wildcard include/config/ACPI_PROCESSOR_CSTATE) \
+    $(wildcard include/config/ACPI_HOTPLUG_CPU) \
+    $(wildcard include/config/ACPI_HOTPLUG_IOAPIC) \
+    $(wildcard include/config/X86_IO_APIC) \
+    $(wildcard include/config/PCI) \
+    $(wildcard include/config/ACPI_WMI) \
+    $(wildcard include/config/ACPI_THERMAL_LIB) \
+    $(wildcard include/config/ACPI_HMAT) \
+    $(wildcard include/config/ACPI_NUMA) \
+    $(wildcard include/config/HIBERNATION) \
+    $(wildcard include/config/PM_SLEEP) \
+    $(wildcard include/config/ACPI_HOTPLUG_MEMORY) \
+    $(wildcard include/config/ACPI_CONTAINER) \
+    $(wildcard include/config/ACPI_GTDT) \
+    $(wildcard include/config/SUSPEND) \
+    $(wildcard include/config/PM) \
+    $(wildcard include/config/GPIOLIB) \
+    $(wildcard include/config/ACPI_TABLE_UPGRADE) \
+    $(wildcard include/config/ACPI_WATCHDOG) \
+    $(wildcard include/config/ACPI_SPCR_TABLE) \
+    $(wildcard include/config/ACPI_GENERIC_GSI) \
+    $(wildcard include/config/ACPI_LPIT) \
+    $(wildcard include/config/ACPI_PROCESSOR_IDLE) \
+    $(wildcard include/config/ACPI_PPTT) \
+    $(wildcard include/config/ACPI_PCC) \
+    $(wildcard include/config/ACPI_FFH) \
+  include/linux/ioport.h \
+  include/linux/resource_ext.h \
   include/linux/device.h \
     $(wildcard include/config/GENERIC_MSI_IRQ) \
     $(wildcard include/config/ENERGY_MODEL) \
@@ -982,9 +1022,6 @@ deps_/media/sf_share/ClassC_2team/device_driver/button/devtest.o := \
     $(wildcard include/config/DMA_OPS_BYPASS) \
     $(wildcard include/config/DMA_NEED_SYNC) \
     $(wildcard include/config/IOMMU_DMA) \
-    $(wildcard include/config/PM) \
-    $(wildcard include/config/PM_SLEEP) \
-    $(wildcard include/config/OF) \
     $(wildcard include/config/DEVTMPFS) \
   include/linux/dev_printk.h \
   include/linux/energy_model.h \
@@ -997,7 +1034,6 @@ deps_/media/sf_share/ClassC_2team/device_driver/button/devtest.o := \
     $(wildcard include/config/CPU_FREQ_GOV_SCHEDUTIL) \
   include/linux/sched/idle.h \
   include/linux/sched/sd_flags.h \
-  include/linux/ioport.h \
   include/linux/klist.h \
   include/linux/pm.h \
     $(wildcard include/config/VT_CONSOLE_SLEEP) \
@@ -1005,16 +1041,55 @@ deps_/media/sf_share/ClassC_2team/device_driver/button/devtest.o := \
     $(wildcard include/config/PM_CLK) \
     $(wildcard include/config/PM_GENERIC_DOMAINS) \
   include/linux/device/bus.h \
-    $(wildcard include/config/ACPI) \
   include/linux/device/class.h \
   include/linux/device/devres.h \
     $(wildcard include/config/HAS_IOMEM) \
   include/linux/device/driver.h \
   arch/arm64/include/asm/device.h \
   include/linux/pm_wakeup.h \
-  include/linux/delay.h \
-  arch/arm64/include/generated/asm/delay.h \
-  include/asm-generic/delay.h \
+  include/linux/mod_devicetable.h \
+  include/uapi/linux/mei.h \
+  include/uapi/linux/mei_uuid.h \
+  include/linux/property.h \
+  include/linux/fwnode.h \
+  include/linux/node.h \
+    $(wildcard include/config/HMEM_REPORTING) \
+  include/acpi/acpi.h \
+  include/acpi/platform/acenv.h \
+  include/acpi/platform/acgcc.h \
+  include/acpi/platform/aclinux.h \
+    $(wildcard include/config/ACPI_REDUCED_HARDWARE_ONLY) \
+    $(wildcard include/config/ACPI_DEBUG) \
+  include/linux/ctype.h \
+  arch/arm64/include/asm/acenv.h \
+  include/acpi/acnames.h \
+  include/acpi/actypes.h \
+  include/acpi/acexcep.h \
+  include/acpi/actbl.h \
+  include/acpi/actbl1.h \
+  include/acpi/actbl2.h \
+  include/acpi/actbl3.h \
+  include/acpi/acrestyp.h \
+  include/acpi/platform/acenvex.h \
+  include/acpi/platform/aclinuxex.h \
+  include/acpi/platform/acgccex.h \
+  include/acpi/acoutput.h \
+  include/acpi/acpiosxf.h \
+  include/acpi/acpixf.h \
+  include/acpi/acconfig.h \
+  include/acpi/acbuffer.h \
+  include/acpi/acpi_numa.h \
+  include/linux/fw_table.h \
+    $(wildcard include/config/CXL_BUS) \
+  include/acpi/acpi_bus.h \
+    $(wildcard include/config/X86_ANDROID_TABLETS) \
+    $(wildcard include/config/ACPI_SYSTEM_POWER_STATES_SUPPORT) \
+    $(wildcard include/config/ACPI_SLEEP) \
+  include/acpi/acpi_drivers.h \
+    $(wildcard include/config/ACPI_DOCK) \
+  include/acpi/acpi_io.h \
+  include/linux/io.h \
+    $(wildcard include/config/HAS_IOPORT_MAP) \
   arch/arm64/include/asm/io.h \
   include/linux/pgtable.h \
     $(wildcard include/config/HIGHPTE) \
@@ -1052,29 +1127,50 @@ deps_/media/sf_share/ClassC_2team/device_driver/button/devtest.o := \
     $(wildcard include/config/GENERIC_IOMAP) \
     $(wildcard include/config/TRACE_MMIO_ACCESS) \
     $(wildcard include/config/GENERIC_IOREMAP) \
-    $(wildcard include/config/HAS_IOPORT_MAP) \
   include/asm-generic/pci_iomap.h \
-    $(wildcard include/config/PCI) \
     $(wildcard include/config/NO_GENERIC_PCI_IOPORT_MAP) \
     $(wildcard include/config/GENERIC_PCI_IOMAP) \
   include/linux/logic_pio.h \
     $(wildcard include/config/INDIRECT_PIO) \
-  include/linux/fwnode.h \
+  arch/arm64/include/asm/acpi.h \
+    $(wildcard include/config/ACPI_APEI) \
+  include/linux/cpuidle.h \
+    $(wildcard include/config/ARCH_NEEDS_CPU_IDLE_COUPLED) \
+    $(wildcard include/config/CPU_IDLE) \
+    $(wildcard include/config/ARCH_HAS_CPU_RELAX) \
+  include/linux/context_tracking.h \
+    $(wildcard include/config/CONTEXT_TRACKING_USER) \
+    $(wildcard include/config/HAVE_CONTEXT_TRACKING_USER_OFFSTACK) \
+    $(wildcard include/config/CONTEXT_TRACKING_USER_FORCE) \
+  include/linux/vtime.h \
+    $(wildcard include/config/VIRT_CPU_ACCOUNTING) \
+    $(wildcard include/config/IRQ_TIME_ACCOUNTING) \
+  include/linux/context_tracking_state.h \
+    $(wildcard include/config/CONTEXT_TRACKING) \
+  include/linux/efi.h \
+    $(wildcard include/config/X86_32) \
+    $(wildcard include/config/EFI_ESRT) \
+    $(wildcard include/config/EFI_SOFT_RESERVE) \
+    $(wildcard include/config/EFI_CAPSULE_LOADER) \
+    $(wildcard include/config/EFI_EMBEDDED_FIRMWARE) \
+    $(wildcard include/config/LOAD_UEFI_KEYS) \
+    $(wildcard include/config/XEN_EFI) \
+  include/linux/proc_fs.h \
+    $(wildcard include/config/PROC_PID_ARCH_STATUS) \
+  include/linux/rtc.h \
+    $(wildcard include/config/RTC_INTF_DEV_UIE_EMUL) \
+    $(wildcard include/config/RTC_HCTOSYS_DEVICE) \
+    $(wildcard include/config/RTC_NVMEM) \
+    $(wildcard include/config/RTC_INTF_SYSFS) \
   include/linux/interrupt.h \
     $(wildcard include/config/IRQ_FORCED_THREADING) \
     $(wildcard include/config/GENERIC_IRQ_PROBE) \
     $(wildcard include/config/IRQ_TIMINGS) \
   include/linux/irqreturn.h \
   include/linux/hardirq.h \
-  include/linux/context_tracking_state.h \
-    $(wildcard include/config/CONTEXT_TRACKING_USER) \
-    $(wildcard include/config/CONTEXT_TRACKING) \
   include/linux/ftrace_irq.h \
     $(wildcard include/config/HWLAT_TRACER) \
     $(wildcard include/config/OSNOISE_TRACER) \
-  include/linux/vtime.h \
-    $(wildcard include/config/VIRT_CPU_ACCOUNTING) \
-    $(wildcard include/config/IRQ_TIME_ACCOUNTING) \
   arch/arm64/include/asm/hardirq.h \
   arch/arm64/include/asm/irq.h \
   include/asm-generic/irq.h \
@@ -1093,7 +1189,6 @@ deps_/media/sf_share/ClassC_2team/device_driver/button/devtest.o := \
     $(wildcard include/config/GENERIC_IRQ_CHIP) \
     $(wildcard include/config/GENERIC_IRQ_MULTI_HANDLER) \
   include/linux/irqhandler.h \
-  include/linux/io.h \
   arch/arm64/include/generated/asm/irq_regs.h \
   include/asm-generic/irq_regs.h \
   include/linux/irqdesc.h \
@@ -1103,12 +1198,269 @@ deps_/media/sf_share/ClassC_2team/device_driver/button/devtest.o := \
     $(wildcard include/config/IRQ_DOMAIN) \
   arch/arm64/include/generated/asm/hw_irq.h \
   include/asm-generic/hw_irq.h \
-  include/linux/gpio.h \
-    $(wildcard include/config/GPIOLIB) \
+  include/linux/nvmem-provider.h \
+    $(wildcard include/config/NVMEM) \
   include/linux/gpio/consumer.h \
     $(wildcard include/config/GPIO_SYSFS) \
-  /media/sf_share/ClassC_2team/device_driver/button/my_ioctl.h \
+  include/uapi/linux/rtc.h \
+  include/linux/seq_file.h \
+  include/linux/string_helpers.h \
+  include/linux/string_choices.h \
+  include/linux/cdev.h \
+  include/linux/poll.h \
+  include/uapi/linux/poll.h \
+  arch/arm64/include/generated/uapi/asm/poll.h \
+  include/uapi/asm-generic/poll.h \
+  include/uapi/linux/eventpoll.h \
+  include/linux/pstore.h \
+    $(wildcard include/config/ARM_THUMB) \
+    $(wildcard include/config/ARM) \
+  include/linux/kmsg_dump.h \
+  include/linux/range.h \
+  include/linux/reboot.h \
+  include/uapi/linux/reboot.h \
+  arch/arm64/include/generated/asm/emergency-restart.h \
+  include/asm-generic/emergency-restart.h \
+  include/linux/memblock.h \
+    $(wildcard include/config/ARCH_KEEP_MEMBLOCK) \
+    $(wildcard include/config/HAVE_MEMBLOCK_PHYS_MAP) \
+    $(wildcard include/config/MEMTEST) \
+  include/linux/mm.h \
+    $(wildcard include/config/HAVE_ARCH_MMAP_RND_BITS) \
+    $(wildcard include/config/HAVE_ARCH_MMAP_RND_COMPAT_BITS) \
+    $(wildcard include/config/MEM_SOFT_DIRTY) \
+    $(wildcard include/config/ARCH_USES_HIGH_VMA_FLAGS) \
+    $(wildcard include/config/ARCH_HAS_PKEYS) \
+    $(wildcard include/config/ARCH_PKEY_BITS) \
+    $(wildcard include/config/X86_USER_SHADOW_STACK) \
+    $(wildcard include/config/PARISC) \
+    $(wildcard include/config/SPARC64) \
+    $(wildcard include/config/HAVE_ARCH_USERFAULTFD_MINOR) \
+    $(wildcard include/config/PPC32) \
+    $(wildcard include/config/SHMEM) \
+    $(wildcard include/config/MIGRATION) \
+    $(wildcard include/config/ARCH_HAS_GIGANTIC_PAGE) \
+    $(wildcard include/config/ARCH_HAS_PTE_SPECIAL) \
+    $(wildcard include/config/SPLIT_PTE_PTLOCKS) \
+    $(wildcard include/config/DEBUG_VM_RB) \
+    $(wildcard include/config/PAGE_POISONING) \
+    $(wildcard include/config/INIT_ON_ALLOC_DEFAULT_ON) \
+    $(wildcard include/config/INIT_ON_FREE_DEFAULT_ON) \
+    $(wildcard include/config/DEBUG_PAGEALLOC) \
+    $(wildcard include/config/ARCH_WANT_OPTIMIZE_DAX_VMEMMAP) \
+    $(wildcard include/config/HUGETLBFS) \
+    $(wildcard include/config/MAPPING_DIRTY_HELPERS) \
+    $(wildcard include/config/PAGE_POOL) \
+  include/linux/pgalloc_tag.h \
+  include/linux/page_ext.h \
+  include/linux/stacktrace.h \
+    $(wildcard include/config/ARCH_STACKWALK) \
+    $(wildcard include/config/STACKTRACE) \
+    $(wildcard include/config/HAVE_RELIABLE_STACKTRACE) \
+  include/linux/page_ref.h \
+    $(wildcard include/config/DEBUG_PAGE_REF) \
+  include/linux/memremap.h \
+    $(wildcard include/config/DEVICE_PRIVATE) \
+    $(wildcard include/config/PCI_P2PDMA) \
+  include/linux/huge_mm.h \
+    $(wildcard include/config/PGTABLE_HAS_HUGE_LEAVES) \
+  include/linux/secretmem.h \
+    $(wildcard include/config/SECRETMEM) \
+  include/linux/vmstat.h \
+    $(wildcard include/config/VM_EVENT_COUNTERS) \
+    $(wildcard include/config/DEBUG_TLBFLUSH) \
+    $(wildcard include/config/PER_VMA_LOCK_STATS) \
+  include/linux/vm_event_item.h \
+    $(wildcard include/config/MEMORY_BALLOON) \
+    $(wildcard include/config/BALLOON_COMPACTION) \
+  arch/arm64/include/generated/asm/dma.h \
+  include/asm-generic/dma.h \
+  include/linux/psci.h \
+    $(wildcard include/config/ARM_PSCI_FW) \
+  include/linux/arm-smccc.h \
+    $(wildcard include/config/HAVE_ARM_SMCCC) \
+  arch/arm64/include/asm/smp_plat.h \
+  include/linux/regulator/consumer.h \
+    $(wildcard include/config/REGULATOR) \
+  include/linux/suspend.h \
+    $(wildcard include/config/VT) \
+    $(wildcard include/config/HIBERNATION_SNAPSHOT_DEV) \
+    $(wildcard include/config/PM_SLEEP_DEBUG) \
+    $(wildcard include/config/PM_AUTOSLEEP) \
+  include/linux/swap.h \
+    $(wildcard include/config/THP_SWAP) \
+  include/linux/memcontrol.h \
+  include/linux/cgroup.h \
+    $(wildcard include/config/DEBUG_CGROUP_REF) \
+    $(wildcard include/config/CGROUP_CPUACCT) \
+    $(wildcard include/config/SOCK_CGROUP_DATA) \
+    $(wildcard include/config/CGROUP_DATA) \
+    $(wildcard include/config/CGROUP_BPF) \
+  include/uapi/linux/cgroupstats.h \
+  include/uapi/linux/taskstats.h \
+  include/linux/ns_common.h \
+  include/linux/nsproxy.h \
+  include/linux/user_namespace.h \
+    $(wildcard include/config/INOTIFY_USER) \
+    $(wildcard include/config/FANOTIFY) \
+    $(wildcard include/config/BINFMT_MISC) \
+    $(wildcard include/config/PERSISTENT_KEYRINGS) \
+  include/linux/kernel_stat.h \
+  include/linux/cgroup-defs.h \
+    $(wildcard include/config/CGROUP_NET_CLASSID) \
+    $(wildcard include/config/CGROUP_NET_PRIO) \
+  include/linux/u64_stats_sync.h \
+  arch/arm64/include/generated/asm/local64.h \
+  include/asm-generic/local64.h \
+  arch/arm64/include/generated/asm/local.h \
+  include/asm-generic/local.h \
+  include/linux/bpf-cgroup-defs.h \
+    $(wildcard include/config/BPF_LSM) \
+  include/linux/psi_types.h \
+  include/linux/kthread.h \
+  include/linux/cgroup_subsys.h \
+    $(wildcard include/config/CGROUP_DEVICE) \
+    $(wildcard include/config/CGROUP_FREEZER) \
+    $(wildcard include/config/CGROUP_PERF) \
+    $(wildcard include/config/CGROUP_HUGETLB) \
+    $(wildcard include/config/CGROUP_PIDS) \
+    $(wildcard include/config/CGROUP_RDMA) \
+    $(wildcard include/config/CGROUP_MISC) \
+    $(wildcard include/config/CGROUP_DEBUG) \
+  include/linux/cgroup_refcnt.h \
+  include/linux/page_counter.h \
+  include/linux/vmpressure.h \
+  include/linux/eventfd.h \
+  include/uapi/linux/eventfd.h \
+  include/linux/writeback.h \
+  include/linux/flex_proportions.h \
+  include/linux/backing-dev-defs.h \
+    $(wildcard include/config/DEBUG_FS) \
+  include/linux/blk_types.h \
+    $(wildcard include/config/FAIL_MAKE_REQUEST) \
+    $(wildcard include/config/BLK_CGROUP_IOCOST) \
+    $(wildcard include/config/BLK_INLINE_ENCRYPTION) \
+    $(wildcard include/config/BLK_DEV_INTEGRITY) \
+  include/linux/bvec.h \
+  include/linux/highmem.h \
+  include/linux/cacheflush.h \
+  arch/arm64/include/asm/cacheflush.h \
+  include/linux/kgdb.h \
+    $(wildcard include/config/HAVE_ARCH_KGDB) \
+    $(wildcard include/config/KGDB) \
+    $(wildcard include/config/SERIAL_KGDB_NMI) \
+    $(wildcard include/config/KGDB_HONOUR_BLOCKLIST) \
+  include/linux/kprobes.h \
+    $(wildcard include/config/KRETPROBE_ON_RETHOOK) \
+    $(wildcard include/config/OPTPROBES) \
+    $(wildcard include/config/KPROBES_ON_FTRACE) \
+  include/linux/ftrace.h \
+    $(wildcard include/config/HAVE_FUNCTION_GRAPH_FREGS) \
+    $(wildcard include/config/FUNCTION_TRACER) \
+    $(wildcard include/config/HAVE_DYNAMIC_FTRACE_WITH_ARGS) \
+    $(wildcard include/config/HAVE_FTRACE_REGS_HAVING_PT_REGS) \
+    $(wildcard include/config/DYNAMIC_FTRACE_WITH_REGS) \
+    $(wildcard include/config/DYNAMIC_FTRACE_WITH_ARGS) \
+    $(wildcard include/config/DYNAMIC_FTRACE_WITH_DIRECT_CALLS) \
+    $(wildcard include/config/STACK_TRACER) \
+    $(wildcard include/config/DYNAMIC_FTRACE_WITH_CALL_OPS) \
+    $(wildcard include/config/FRAME_POINTER) \
+    $(wildcard include/config/FUNCTION_GRAPH_RETVAL) \
+    $(wildcard include/config/FUNCTION_PROFILER) \
+    $(wildcard include/config/FTRACE_SYSCALLS) \
+  include/linux/trace_recursion.h \
+    $(wildcard include/config/FTRACE_RECORD_RECURSION) \
+    $(wildcard include/config/FTRACE_VALIDATE_RCU_IS_WATCHING) \
+  include/linux/trace_clock.h \
+  arch/arm64/include/generated/asm/trace_clock.h \
+  include/asm-generic/trace_clock.h \
+  include/linux/kallsyms.h \
+    $(wildcard include/config/KALLSYMS_ALL) \
+  include/linux/ptrace.h \
+  include/linux/pid_namespace.h \
+    $(wildcard include/config/MEMFD_CREATE) \
+    $(wildcard include/config/PID_NS) \
+  include/uapi/linux/ptrace.h \
+  include/linux/seccomp.h \
+    $(wildcard include/config/HAVE_ARCH_SECCOMP_FILTER) \
+    $(wildcard include/config/SECCOMP_FILTER) \
+    $(wildcard include/config/CHECKPOINT_RESTORE) \
+    $(wildcard include/config/SECCOMP_CACHE_DEBUG) \
+  include/uapi/linux/seccomp.h \
+  arch/arm64/include/asm/seccomp.h \
+  arch/arm64/include/generated/asm/unistd_compat_32.h \
+  include/asm-generic/seccomp.h \
+  include/uapi/linux/unistd.h \
+  arch/arm64/include/asm/unistd.h \
+  arch/arm64/include/generated/uapi/asm/unistd_64.h \
+  arch/arm64/include/asm/ftrace.h \
+  include/linux/compat.h \
+    $(wildcard include/config/ARCH_HAS_SYSCALL_WRAPPER) \
+    $(wildcard include/config/X86_X32_ABI) \
+    $(wildcard include/config/COMPAT_OLD_SIGACTION) \
+    $(wildcard include/config/ODD_RT_SIGACTION) \
+  include/linux/sem.h \
+  include/uapi/linux/sem.h \
+  include/linux/ipc.h \
+  include/linux/rhashtable-types.h \
+  include/uapi/linux/ipc.h \
+  arch/arm64/include/generated/uapi/asm/ipcbuf.h \
+  include/uapi/asm-generic/ipcbuf.h \
+  arch/arm64/include/generated/uapi/asm/sembuf.h \
+  include/uapi/asm-generic/sembuf.h \
+  include/linux/socket.h \
+  arch/arm64/include/generated/uapi/asm/socket.h \
+  include/uapi/asm-generic/socket.h \
+  arch/arm64/include/generated/uapi/asm/sockios.h \
+  include/uapi/asm-generic/sockios.h \
+  include/uapi/linux/sockios.h \
+  include/linux/uio.h \
+    $(wildcard include/config/ARCH_HAS_COPY_MC) \
+  include/uapi/linux/uio.h \
+  include/uapi/linux/socket.h \
+  include/uapi/linux/if.h \
+  include/uapi/linux/libc-compat.h \
+  include/uapi/linux/hdlc/ioctl.h \
+  include/uapi/linux/aio_abi.h \
+  arch/arm64/include/asm/syscall_wrapper.h \
+  include/linux/objpool.h \
+  include/linux/rethook.h \
+  arch/arm64/include/asm/kprobes.h \
+  include/asm-generic/kprobes.h \
+  arch/arm64/include/asm/kgdb.h \
+  arch/arm64/include/asm/debug-monitors.h \
+  include/asm-generic/cacheflush.h \
+  include/linux/kmsan.h \
+  include/linux/dma-direction.h \
+  include/linux/highmem-internal.h \
+  include/linux/pagevec.h \
+  include/linux/bio.h \
+    $(wildcard include/config/BLK_DEV_ZONED) \
+  include/linux/mempool.h \
+  include/linux/pagemap.h \
+  include/linux/hugetlb_inline.h \
+  include/uapi/linux/mempolicy.h \
+  include/linux/freezer.h \
+  include/uapi/regulator/regulator.h \
+  include/linux/rtmutex.h \
+    $(wildcard include/config/DEBUG_RT_MUTEXES) \
+  include/linux/irqdomain.h \
+    $(wildcard include/config/IRQ_DOMAIN_NOMAP) \
+  include/linux/irqdomain_defs.h \
+  include/linux/of.h \
+    $(wildcard include/config/OF_DYNAMIC) \
+    $(wildcard include/config/SPARC) \
+    $(wildcard include/config/OF_PROMTREE) \
+    $(wildcard include/config/OF_KOBJ) \
+    $(wildcard include/config/OF_NUMA) \
+    $(wildcard include/config/OF_OVERLAY) \
+  include/uapi/linux/i2c.h \
+  include/linux/miscdevice.h \
+  include/uapi/linux/major.h \
+  include/linux/delay.h \
+  arch/arm64/include/generated/asm/delay.h \
+  include/asm-generic/delay.h \
 
-/media/sf_share/ClassC_2team/device_driver/button/devtest.o: $(deps_/media/sf_share/ClassC_2team/device_driver/button/devtest.o)
+/media/sf_share/ClassC_2team/device_driver/lux/luxtest.o: $(deps_/media/sf_share/ClassC_2team/device_driver/lux/luxtest.o)
 
-$(deps_/media/sf_share/ClassC_2team/device_driver/button/devtest.o):
+$(deps_/media/sf_share/ClassC_2team/device_driver/lux/luxtest.o):

@@ -1,0 +1,1 @@
+savedcmd_/media/sf_share/ClassC_2team/device_driver/ultrasonic/modules.order := {   echo /media/sf_share/ClassC_2team/device_driver/ultrasonic/ultrasonic.o; :; } > /media/sf_share/ClassC_2team/device_driver/ultrasonic/modules.order

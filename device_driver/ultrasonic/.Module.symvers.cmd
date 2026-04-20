@@ -1,0 +1,1 @@
+savedcmd_/media/sf_share/ClassC_2team/device_driver/ultrasonic/Module.symvers :=  scripts/mod/modpost -M        -o /media/sf_share/ClassC_2team/device_driver/ultrasonic/Module.symvers -T /media/sf_share/ClassC_2team/device_driver/ultrasonic/modules.order -i Module.symvers -e 

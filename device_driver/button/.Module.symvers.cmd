@@ -1,1 +1,1 @@
-cmd_/home/user/work/practice_dd/EX02-02_std_key/Module.symvers :=  sed 's/ko$$/o/'  /home/user/work/practice_dd/EX02-02_std_key/modules.order | scripts/mod/modpost -m -a    -o /home/user/work/practice_dd/EX02-02_std_key/Module.symvers -e -i Module.symvers -T - 
+savedcmd_/media/sf_share/ClassC_2team/device_driver/button/Module.symvers :=  scripts/mod/modpost -M        -o /media/sf_share/ClassC_2team/device_driver/button/Module.symvers -T /media/sf_share/ClassC_2team/device_driver/button/modules.order -i Module.symvers -e 

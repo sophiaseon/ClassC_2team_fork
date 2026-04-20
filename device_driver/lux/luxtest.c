@@ -87,7 +87,7 @@ static struct miscdevice bh1750_misc = {
     .fops  = &bh1750_fops,
 };
 
-static int bh1750_probe(struct i2c_client *client, const struct i2c_device_id *id)
+static int bh1750_probe(struct i2c_client *client)
 {
     struct bh1750_data *data;
 

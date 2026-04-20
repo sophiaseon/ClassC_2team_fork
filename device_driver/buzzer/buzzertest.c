@@ -358,7 +358,7 @@ err0:
 	return ret;
 }
 
-static int driver_remove(struct platform_device *pdev)
+static void driver_remove(struct platform_device *pdev)
 {
 	printk("buzzertest: device_exit\n");
 
@@ -367,7 +367,6 @@ static int driver_remove(struct platform_device *pdev)
 	cdev_del(my_cdev);
 	unregister_chrdev_region(devt, device_minor_count);
 
-	return 0;
 }
 
 static int driver_suspend(struct platform_device *pdev, pm_message_t pm)

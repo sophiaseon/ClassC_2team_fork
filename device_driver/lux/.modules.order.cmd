@@ -1,0 +1,1 @@
+savedcmd_/media/sf_share/ClassC_2team/device_driver/lux/modules.order := {   echo /media/sf_share/ClassC_2team/device_driver/lux/luxtest.o; :; } > /media/sf_share/ClassC_2team/device_driver/lux/modules.order

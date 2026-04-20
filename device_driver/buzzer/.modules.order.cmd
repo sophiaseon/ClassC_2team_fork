@@ -1,1 +1,1 @@
-cmd_/home/user/AA/ClassC_2team/device_driver/buzzer/modules.order := {   echo /home/user/AA/ClassC_2team/device_driver/buzzer/buzzertest.ko; :; } > /home/user/AA/ClassC_2team/device_driver/buzzer/modules.order
+savedcmd_/media/sf_share/ClassC_2team/device_driver/buzzer/modules.order := {   echo /media/sf_share/ClassC_2team/device_driver/buzzer/buzzertest.o; :; } > /media/sf_share/ClassC_2team/device_driver/buzzer/modules.order

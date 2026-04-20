@@ -170,7 +170,7 @@ static ssize_t hcsr04_array_read(struct file *file, char __user *buf,
 static const struct file_operations hcsr04_array_fops = {
 	.owner = THIS_MODULE,
 	.read = hcsr04_array_read,
-	.llseek = no_llseek,
+	//.llseek = no_llseek,
 };
 
 static int hcsr04_array_probe(struct platform_device *pdev)

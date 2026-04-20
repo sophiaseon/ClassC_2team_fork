@@ -1,0 +1,1 @@
+savedcmd_/media/sf_share/ClassC_2team/device_driver/ultrasonic/ultrasonic.mod := printf '%s\n'   ultrasonic.o | awk '!x[$$0]++ { print("/media/sf_share/ClassC_2team/device_driver/ultrasonic/"$$0) }' > /media/sf_share/ClassC_2team/device_driver/ultrasonic/ultrasonic.mod

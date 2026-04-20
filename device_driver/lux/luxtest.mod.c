@@ -17,3 +17,5 @@ __section(".gnu.linkonce.this_module") = {
 
 MODULE_INFO(depends, "");
 
+MODULE_ALIAS("of:N*T*Cwilltek,bh1750");
+MODULE_ALIAS("of:N*T*Cwilltek,bh1750C*");

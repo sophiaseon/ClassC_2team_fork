@@ -1,1 +1,1 @@
-/home/user/work/practice_dd/EX02-02_std_key/devtest.o
+/media/sf_share/ClassC_2team/device_driver/button/devtest.o

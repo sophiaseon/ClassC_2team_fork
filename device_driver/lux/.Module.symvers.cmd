@@ -1,0 +1,1 @@
+savedcmd_/media/sf_share/ClassC_2team/device_driver/lux/Module.symvers :=  scripts/mod/modpost -M        -o /media/sf_share/ClassC_2team/device_driver/lux/Module.symvers -T /media/sf_share/ClassC_2team/device_driver/lux/modules.order -i Module.symvers -e 

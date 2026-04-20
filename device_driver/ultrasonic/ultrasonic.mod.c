@@ -17,3 +17,5 @@ __section(".gnu.linkonce.this_module") = {
 
 MODULE_INFO(depends, "");
 
+MODULE_ALIAS("of:N*T*Ccustom,hcsr04-array");
+MODULE_ALIAS("of:N*T*Ccustom,hcsr04-arrayC*");
