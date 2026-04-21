@@ -475,7 +475,7 @@ void MainWindow::updateCurrentTime()
         startBuzzerTetris();
     } else {
         if (m_alarmPlayer->state() == QProcess::NotRunning) {
-            m_alarmPlayer->start("aplay", QStringList() << soundFile);
+            m_alarmPlayer->start("aplay", QStringList() << "-D" << "hw:3,0" << soundFile);
         }
     }
 
