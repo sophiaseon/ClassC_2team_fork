@@ -264,20 +264,20 @@ int CameraThread::subInitCapture()
         return -1;
     }
 
-    bool support_320x240;
+    bool support_640x480;
     struct v4l2_frmsizeenum fsize;
     memset(&fsize, 0, sizeof(fsize));
     fsize.index = 0;
     fsize.pixel_format = V4L2_PIX_FMT_YUYV;
-    support_320x240 = false;
+    support_640x480 = false;
     while (ioctl(fd, VIDIOC_ENUM_FRAMESIZES, &fsize) == 0) {
         qDebug() << "frame size " << fsize.discrete.width << fsize.discrete.height;
-        if (fsize.discrete.width == 320 && fsize.discrete.height == 240)
-            support_320x240 = true;
+        if (fsize.discrete.width == 640 && fsize.discrete.height == 480)
+            support_640x480 = true;
         fsize.index++;
     }
-    if (!support_320x240) {
-        qWarning() << "frame size 320x240 is not supported by this camera";
+    if (!support_640x480) {
+        qWarning() << "frame size 640x480 is not supported by this camera";
         return -1;
     }
 
@@ -299,8 +299,8 @@ int CameraThread::subInitCapture()
                  << " height =" << fmt.fmt.pix.height
                  << " pfmt =" << fmt.fmt.pix.pixelformat;
 
-    fmt.fmt.pix.width = 320;
-    fmt.fmt.pix.height = 240;
+    fmt.fmt.pix.width = 640;
+    fmt.fmt.pix.height = 480;
     fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_YUYV;
     if (ioctl(fd, VIDIOC_S_FMT, &fmt) < 0)
         qWarning() << "VIDIOC_S_FMT fail" << errno;
@@ -315,8 +315,8 @@ int CameraThread::subInitCapture()
         qDebug() << "fmt width =" << fmt.fmt.pix.width
                  << " height =" << fmt.fmt.pix.height
                  << " pfmt =" << fmt.fmt.pix.pixelformat;
-    Q_ASSERT(fmt.fmt.pix.width == 320);
-    Q_ASSERT(fmt.fmt.pix.height == 240);
+    Q_ASSERT(fmt.fmt.pix.width == 640);
+    Q_ASSERT(fmt.fmt.pix.height == 480);
     Q_ASSERT(fmt.fmt.pix.pixelformat == V4L2_PIX_FMT_YUYV);
 
     videodev.cap_width = fmt.fmt.pix.width;
@@ -327,11 +327,11 @@ int CameraThread::subInitCapture()
     memset(&parm, 0, sizeof(parm));
     parm.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
     parm.parm.capture.timeperframe.numerator = 1;
-    parm.parm.capture.timeperframe.denominator = 10;
+    parm.parm.capture.timeperframe.denominator = 15;
     if (ioctl(fd, VIDIOC_S_PARM, &parm) < 0)
         qWarning() << "VIDIOC_S_PARM fail" << errno;
     else
-        qDebug() << "framerate set to 10fps";
+        qDebug() << "framerate set to 15fps";
 
     return 0;
 }

@@ -1,17 +1,28 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include <csignal>
+#include <sys/socket.h>
+#include <unistd.h>
 #include <QApplication>
 
-static MainWindow *g_mainWindow = nullptr;
+int MainWindow::sigFd[2] = {-1, -1};
 
-static void signalHandler(int)
+static void sigHandler(int)
 {
-    // SIGINT(Ctrl+C) / SIGTERM 수신 시 카메라 정리 후 종료
-    if (g_mainWindow)
-        g_mainWindow->close();
-    else
-        QApplication::quit();
+    char a = 1;
+    (void)::write(MainWindow::sigFd[0], &a, sizeof(a));
+}
+
+void MainWindow::setupSignalHandlers()
+{
+    // self-pipe trick: 신호를 Qt 이벤트 루프에 안전하게 전달
+    ::socketpair(AF_UNIX, SOCK_STREAM, 0, sigFd);
+    struct sigaction sa;
+    sa.sa_handler = sigHandler;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = SA_RESTART;
+    sigaction(SIGTERM, &sa, nullptr);
+    sigaction(SIGINT,  &sa, nullptr);
 }
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -20,9 +31,11 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
-    g_mainWindow = this;
-    std::signal(SIGINT,  signalHandler);
-    std::signal(SIGTERM, signalHandler);
+    setupSignalHandlers();
+
+    // QSocketNotifier로 pipe 읽기 감지 → Qt 이벤트 루프 안에서 안전하게 종료
+    snTerm = new QSocketNotifier(sigFd[1], QSocketNotifier::Read, this);
+    connect(snTerm, SIGNAL(activated(int)), this, SLOT(handleSigTerm()));
 
     camera = new CameraThread(this);
     connect(camera, SIGNAL(send_image(QImage)), this, SLOT(handle_image(QImage)));
@@ -31,6 +44,14 @@ MainWindow::MainWindow(QWidget *parent) :
 MainWindow::~MainWindow()
 {
     delete ui;
+}
+
+void MainWindow::handleSigTerm()
+{
+    snTerm->setEnabled(false);
+    char tmp;
+    (void)::read(sigFd[1], &tmp, sizeof(tmp));
+    close(); // closeEvent 호출 → 카메라 정리 후 종료
 }
 
 void MainWindow::closeEvent(QCloseEvent *event)
