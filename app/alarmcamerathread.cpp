@@ -137,7 +137,7 @@ int AlarmCameraThread::initCapture()
     if (m_videodev.fd >= 0)
         return 0;
 
-    static const char *candidates[] = { "/dev/video4", "/dev/video7", nullptr };
+    static const char *candidates[] = { "/dev/video7", "/dev/video4", nullptr };
     int fd = -1;
     for (int i = 0; candidates[i]; ++i) {
         fd = open(candidates[i], O_RDWR | O_NONBLOCK | O_CLOEXEC);

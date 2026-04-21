@@ -31,6 +31,7 @@
 #include <QMessageBox>
 #include <QProcess>
 #include <QPushButton>
+#include <QEventLoop>
 #include <QTcpServer>
 #include <QTcpSocket>
 #include <QTemporaryFile>
@@ -995,21 +996,44 @@ void MainWindow::openFriendStatDialog()
     }
 
     m_friendButton->setEnabled(false);
-    QTimer::singleShot(1000, this, [this]() { m_friendButton->setEnabled(true); });
 
+    // Use a local QEventLoop so the GUI event loop keeps running during the
+    // entire network transaction.  This guarantees our own QTcpServer can
+    // still fire newConnection while we are waiting for the friend's reply.
     QTcpSocket socket;
+    QEventLoop  loop;
+    QTimer      timer;
+    timer.setSingleShot(true);
+    bool connected = false;
+
+    // ── Connection phase ──────────────────────────────────────────────
+    connect(&socket, &QTcpSocket::connected,     this, [&]() { connected = true; loop.quit(); });
+    connect(&socket, &QTcpSocket::disconnected,  &loop, &QEventLoop::quit);
+    connect(&timer,  &QTimer::timeout,           &loop, &QEventLoop::quit);
+    timer.start(TIMEOUT_MS);
     socket.connectToHost(friendIp, ALARM_PORT);
-    if (!socket.waitForConnected(TIMEOUT_MS)) {
+    loop.exec();
+    timer.stop();
+
+    m_friendButton->setEnabled(true);
+    if (!connected) {
         showStyledAlert("Friend Stat",
             QString("Cannot connect to friend's board.\n(%1)").arg(socket.errorString()));
         return;
     }
 
-    // Receive until server closes the connection
+    // ── Receive phase ─────────────────────────────────────────────────
+    // Grab any bytes already in the buffer, then wait for the server to
+    // close the connection (which signals "all data sent").
     QByteArray data;
-    while (socket.waitForReadyRead(TIMEOUT_MS))
-        data += socket.readAll();
-    data += socket.readAll(); // drain any remaining buffered bytes
+    connect(&socket, &QTcpSocket::readyRead, this, [&]() { data += socket.readAll(); });
+    // disconnected already wired to loop.quit() above
+    timer.start(TIMEOUT_MS);
+    data += socket.readAll(); // drain anything buffered before exec()
+    if (socket.state() != QAbstractSocket::UnconnectedState)
+        loop.exec();
+    timer.stop();
+    data += socket.readAll(); // final drain
     socket.disconnectFromHost();
 
     if (data.isEmpty()) {
@@ -1017,17 +1041,7 @@ void MainWindow::openFriendStatDialog()
         return;
     }
 
-    // Write received data to a temp file so StatDialog can read it
-    QTemporaryFile tmp;
-    tmp.setAutoRemove(true);
-    if (!tmp.open()) {
-        showStyledAlert("Friend Stat", "Failed to create temporary file");
-        return;
-    }
-    tmp.write(data);
-    tmp.flush();
-
-    StatDialog dlg(tmp.fileName(), this,
+    StatDialog dlg(data, friendIp, this,
         QString("Friend's Alarm Statistics (%1)").arg(friendIp));
     dlg.exec();
 }
@@ -1055,14 +1069,9 @@ void MainWindow::startAlarmServer()
             payload = f.readAll();
 
         sock->write(payload);
-        // Close connection after all bytes are written
-        connect(sock, &QTcpSocket::bytesWritten, sock, [sock](qint64) {
-            if (sock->bytesToWrite() == 0)
-                sock->disconnectFromHost();
-        });
-        // If the write buffer was already empty (e.g. empty file), disconnect now
-        if (sock->bytesToWrite() == 0)
-            sock->disconnectFromHost();
+        // disconnectFromHost() defers FIN until all pending writes are flushed —
+        // no need for a bytesWritten signal dance.
+        sock->disconnectFromHost();
         connect(sock, &QTcpSocket::disconnected, sock, &QObject::deleteLater);
     });
 }

@@ -4,6 +4,7 @@
 #include <QDialog>
 #include <QElapsedTimer>
 
+class QLabel;
 class QListWidget;
 
 class StatDialog : public QDialog
@@ -11,12 +12,22 @@ class StatDialog : public QDialog
     Q_OBJECT
 
 public:
+    // Local mode: reads log from a file on this device
     explicit StatDialog(const QString &logFilePath, QWidget *parent = nullptr,
                         const QString &title = QString());
+    // Friend mode: log data already fetched over the network
+    explicit StatDialog(const QByteArray &logData, const QString &friendIp,
+                        QWidget *parent, const QString &title = QString());
 
 private:
-    void buildUi(const QString &logFilePath, const QString &title);
+    void       buildUi();
+    void       populateList(const QByteArray &logData);
+    QByteArray fetchFromFriend(const QString &command) const;
 
+    QString       m_title;
+    QString       m_friendIp;                // empty = local mode
+    QListWidget  *m_listWidget   = nullptr;
+    QLabel       *m_summaryLabel = nullptr;
     QElapsedTimer m_actionTimer;
 };
 
