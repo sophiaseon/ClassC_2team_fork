@@ -1022,6 +1022,9 @@ void MainWindow::openFriendStatDialog()
         return;
     }
 
+    // Ask the server for the alarm log
+    socket.write("GET_LOG\n");
+
     // ── Receive phase ─────────────────────────────────────────────────
     // Grab any bytes already in the buffer, then wait for the server to
     // close the connection (which signals "all data sent").
@@ -1063,15 +1066,35 @@ void MainWindow::startAlarmServer()
         QTcpSocket *sock = m_alarmServer->nextPendingConnection();
         if (!sock) return;
 
-        QFile f(QDir::homePath() + "/alarm.txt");
-        QByteArray payload;
-        if (f.open(QIODevice::ReadOnly))
-            payload = f.readAll();
+        // Non-blocking: wait for the client's command line via signal.
+        connect(sock, &QTcpSocket::readyRead, this, [this, sock]() {
+            if (!sock->canReadLine())
+                return;
 
-        sock->write(payload);
-        // disconnectFromHost() defers FIN until all pending writes are flushed —
-        // no need for a bytesWritten signal dance.
-        sock->disconnectFromHost();
+            const QString command = QString::fromUtf8(sock->readLine()).trimmed();
+
+            QByteArray payload;
+            if (command == "GET_LOG" || command.isEmpty()) {
+                QFile f(QDir::homePath() + "/alarm.txt");
+                if (f.open(QIODevice::ReadOnly))
+                    payload = f.readAll();
+            } else if (command.startsWith("GET_PHOTO:")) {
+                const QString path = command.mid(10).trimmed();
+                const QString home = QDir::homePath();
+                // Security: only serve files inside the home directory; reject traversal
+                if (path.startsWith(home) && !path.contains("..")) {
+                    QFile f(path);
+                    if (f.open(QIODevice::ReadOnly))
+                        payload = f.readAll();
+                } else {
+                    qWarning() << "[AlarmServer] Rejected path:" << path;
+                }
+            }
+
+            sock->write(payload);
+            // disconnectFromHost() flushes all pending writes before sending FIN
+            sock->disconnectFromHost();
+        });
         connect(sock, &QTcpSocket::disconnected, sock, &QObject::deleteLater);
     });
 }
