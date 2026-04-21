@@ -469,21 +469,22 @@ void MainWindow::updateCurrentTime()
     if (m_alarmHandling) return;
     m_alarmHandling = true;
 
-    // Play sound — loop until dialog is dismissed
+    // Play sound — loop until dialog is dismissed via polling timer
     const QString &soundFile = triggered.first().soundFile;
-    QMetaObject::Connection loopConn;
+    QTimer *loopTimer = nullptr;
     if (soundFile == "buzzer:tetris") {
         startBuzzerTetris();
     } else {
-        // Reconnect on each finish so the sound loops while the dialog is open.
-        loopConn = connect(m_alarmPlayer,
-                           QOverload<int,QProcess::ExitStatus>::of(&QProcess::finished),
-                           this, [this, soundFile]() {
-            if (m_alarmHandling)
+        // Poll every 200ms: if aplay finished and alarm still active, restart it.
+        // More reliable than QProcess::finished signal across Qt versions.
+        loopTimer = new QTimer(this);
+        loopTimer->setInterval(200);
+        connect(loopTimer, &QTimer::timeout, this, [this, soundFile]() {
+            if (m_alarmPlayer->state() == QProcess::NotRunning)
                 m_alarmPlayer->start("aplay", QStringList() << "-D" << "hw:3,0" << soundFile);
         });
-        if (m_alarmPlayer->state() == QProcess::NotRunning)
-            m_alarmPlayer->start("aplay", QStringList() << "-D" << "hw:3,0" << soundFile);
+        m_alarmPlayer->start("aplay", QStringList() << "-D" << "hw:3,0" << soundFile);
+        loopTimer->start();
     }
 
     // Collect alarm times and determine mode priority: Camera > Button > Ultrasonic > Game > Simple
@@ -532,10 +533,11 @@ void MainWindow::updateCurrentTime()
     }
     dlg.exec();
 
-    // Stop loop: disconnect before terminate so the finished signal
-    // doesn't restart aplay after we've already killed it.
-    if (loopConn)
-        disconnect(loopConn);
+    // Stop loop timer before killing aplay
+    if (loopTimer) {
+        loopTimer->stop();
+        loopTimer->deleteLater();
+    }
 
     const QString capturedPhotoPath = dlg.capturedPhotoPath();
 
