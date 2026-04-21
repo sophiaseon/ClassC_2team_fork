@@ -507,7 +507,7 @@ void DismissDialog::captureByButton()
     const QString fileName = m_alarmId >= 0
         ? QString("alarm_%1_%2.jpg").arg(m_alarmId).arg(ts)
         : QString("%1.jpg").arg(ts);
-    const QString photoPath = QString("/mnt/nfs/capture/%1").arg(fileName);
+    const QString photoPath = QDir::homePath() + QString("/capture/%1").arg(fileName);
 
     m_cameraStatusLabel->setText("Capturing... keep still");
     m_cameraThread->requestCapture(photoPath);

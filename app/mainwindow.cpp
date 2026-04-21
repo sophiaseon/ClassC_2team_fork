@@ -545,8 +545,8 @@ void MainWindow::updateCurrentTime()
     {
         const QString dismissTime =
             QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss");
-        QDir().mkpath("/mnt/nfs/capture");
-        QFile logFile("/mnt/nfs/alarm.txt");
+        QDir().mkpath(QDir::homePath() + "/capture");
+        QFile logFile(QDir::homePath() + "/alarm.txt");
         if (logFile.open(QIODevice::Append | QIODevice::Text)) {
             QTextStream out(&logFile);
             for (const TriggeredInfo &t : triggered) {
@@ -775,8 +775,8 @@ void MainWindow::setDebugAlarmPlus5Sec()
     QLabel *soundLabel = new QLabel("Alarm Sound", &dlg);
     soundLabel->setStyleSheet("QLabel { font-size: 13px; color: #aaaaaa; }");
     QComboBox *soundCombo = new QComboBox(&dlg);
-    soundCombo->addItem("test.wav",  "/mnt/nfs/test_contents/test.wav");
-    soundCombo->addItem("test2.wav", "/mnt/nfs/test_contents/test2.wav");
+    soundCombo->addItem("test.wav",  QDir::homePath() + "/test_contents/test.wav");
+    soundCombo->addItem("test2.wav", QDir::homePath() + "/test_contents/test2.wav");
     soundCombo->setFixedHeight(40);
     root->addWidget(soundLabel);
     root->addWidget(soundCombo);
@@ -864,7 +864,7 @@ void MainWindow::openStatDialog()
     m_statButton->setEnabled(false);
     QTimer::singleShot(500, this, [this]() { m_statButton->setEnabled(true); });
 
-    StatDialog dlg("/mnt/nfs/alarm.txt", this);
+    StatDialog dlg(QDir::homePath() + "/alarm.txt", this);
     dlg.exec();
 }
 
@@ -885,11 +885,11 @@ void MainWindow::openAlarmStatDialog(int alarmIndex)
 }
 
 // ── loadAlarmCounter / saveAlarmCounter ───────────────────────────────────────
-#define ALARM_COUNTER_FILE "/mnt/nfs/capture/alarm_counter.txt"
+#define ALARM_COUNTER_FILE (QDir::homePath() + "/capture/alarm_counter.txt")
 
 void MainWindow::loadAlarmCounter()
 {
-    QDir().mkpath("/mnt/nfs/capture");
+    QDir().mkpath(QDir::homePath() + "/capture");
     QFile f(ALARM_COUNTER_FILE);
     if (f.open(QIODevice::ReadOnly | QIODevice::Text)) {
         QTextStream in(&f);
@@ -903,7 +903,7 @@ void MainWindow::loadAlarmCounter()
 
 void MainWindow::saveAlarmCounter()
 {
-    QDir().mkpath("/mnt/nfs/capture");
+    QDir().mkpath(QDir::homePath() + "/capture");
     QFile f(ALARM_COUNTER_FILE);
     if (f.open(QIODevice::WriteOnly | QIODevice::Text | QIODevice::Truncate)) {
         QTextStream out(&f);
@@ -913,11 +913,11 @@ void MainWindow::saveAlarmCounter()
 }
 
 // ── saveAlarms / loadAlarms ───────────────────────────────────────────────────
-#define ALARMS_SAVE_FILE "/mnt/nfs/capture/alarms_save.json"
+#define ALARMS_SAVE_FILE (QDir::homePath() + "/capture/alarms_save.json")
 
 void MainWindow::saveAlarms()
 {
-    QDir().mkpath("/mnt/nfs/capture");
+    QDir().mkpath(QDir::homePath() + "/capture");
     QJsonArray arr;
     for (const AlarmEntry &e : m_alarms) {
         QJsonObject obj;
@@ -961,7 +961,7 @@ void MainWindow::loadAlarms()
         e.alarmId         = obj["alarmId"].toInt();
         e.dateTime        = QDateTime::fromString(obj["dateTime"].toString(), Qt::ISODate);
         e.enabled         = obj["enabled"].toBool(true);
-        e.soundFile       = obj["soundFile"].toString("/mnt/nfs/test_contents/test.wav");
+        e.soundFile       = obj["soundFile"].toString(QDir::homePath() + "/test_contents/test.wav");
         e.dismissMode     = obj["dismissMode"].toInt(0);
         e.gameType        = obj["gameType"].toInt(0);
         e.repeatMask      = obj["repeatMask"].toInt(0);

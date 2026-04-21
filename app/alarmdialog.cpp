@@ -1,6 +1,7 @@
 #include "alarmdialog.h"
 
 #include <QComboBox>
+#include <QDir>
 #include <QDialog>
 #include <QDateTime>
 #include <QGridLayout>
@@ -89,7 +90,7 @@ AlarmDialog::AlarmDialog(QWidget *parent,
                          bool initialUseSpecificDate)
     : QDialog(parent)
     , m_editIndex(editIndex)
-    , m_soundResult(initialSound.isEmpty() ? "/mnt/nfs/test_contents/test.wav" : initialSound)
+    , m_soundResult(initialSound.isEmpty() ? QDir::homePath() + "/test_contents/test.wav" : initialSound)
     , m_dismissMode(initialDismissMode)
     , m_gameType(initialGameType)
     , m_repeatMask(initialRepeatMask)
@@ -300,8 +301,8 @@ void AlarmDialog::buildUi()
     QLabel *soundLabel = new QLabel("Alarm Sound", this);
     soundLabel->setStyleSheet("QLabel { font-size: 14px; font-weight: 600; color: #aaaaaa; }");
     m_soundCombo = makeCombo();
-    m_soundCombo->addItem("test.wav",        "/mnt/nfs/test_contents/test.wav");
-    m_soundCombo->addItem("test2.wav",       "/mnt/nfs/test_contents/test2.wav");
+    m_soundCombo->addItem("test.wav",        QDir::homePath() + "/test_contents/test.wav");
+    m_soundCombo->addItem("test2.wav",       QDir::homePath() + "/test_contents/test2.wav");
     m_soundCombo->addItem("Tetris (Buzzer)", "buzzer:tetris");
     soundLayout->addWidget(soundLabel);
     soundLayout->addWidget(m_soundCombo);

@@ -4,10 +4,28 @@
 #include <QDebug>
 #include <QDir>
 #include <QFileInfo>
+#include <QProcess>
 
 #include <errno.h>
 #include <string.h>
 #include <sys/select.h>
+
+// ── Ethernet link control ─────────────────────────────────────────────────────
+// USB camera and Ethernet share the same USB bus on the Raspberry Pi.
+// Bringing the Ethernet link down while the camera is active frees up
+// bus bandwidth and prevents frame drops / stalls.
+// Adjust ETH_IFACE if your board uses a different interface name (e.g. end0).
+static const char *ETH_IFACE = "eth0";
+
+static void setEthernetLink(bool up)
+{
+    const QString state = up ? QStringLiteral("up") : QStringLiteral("down");
+    int ret = QProcess::execute("ip", {"link", "set", ETH_IFACE, state});
+    if (ret != 0)
+        qWarning() << "[Camera] 'ip link set" << ETH_IFACE << state << "' returned" << ret;
+    else
+        qDebug()  << "[Camera] Ethernet" << ETH_IFACE << state;
+}
 
 // ── ctor / dtor ───────────────────────────────────────────────────────────────
 
@@ -65,18 +83,23 @@ void AlarmCameraThread::setLuxThreshold(float lux)
 
 void AlarmCameraThread::run()
 {
+    // Bring Ethernet down so the USB camera gets full bus bandwidth.
+    setEthernetLink(false);
+
     // BH1750 open() blocks ~8s on this driver — do it before STREAMON
     if (!initBH1750())
         qWarning() << "[Camera] BH1750 unavailable, lux check disabled";
 
     if (initCapture() < 0) {
         emit cameraError("카메라 초기화 실패 (/dev/video0, /dev/video1)");
+        setEthernetLink(true);
         return;
     }
 
     if (startCapture() < 0) {
         emit cameraError("카메라 스트리밍 시작 실패");
         closeCapture();
+        setEthernetLink(true);
         return;
     }
 
@@ -92,6 +115,9 @@ void AlarmCameraThread::run()
     stopCapture();
     closeCapture();
     closeBH1750();
+
+    // Restore Ethernet now that the camera is done.
+    setEthernetLink(true);
 }
 
 // ── xioctl ───────────────────────────────────────────────────────────────────
