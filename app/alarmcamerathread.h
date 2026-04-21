@@ -1,9 +1,16 @@
 #ifndef ALARMCAMERATHREAD_H
 #define ALARMCAMERATHREAD_H
 
+#include <QAtomicInt>
 #include <QImage>
 #include <QMutex>
 #include <QThread>
+
+#include <linux/videodev2.h>
+#include <sys/mman.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/ioctl.h>
 
 class AlarmCameraThread : public QThread
 {
@@ -15,54 +22,55 @@ public:
 
     void stop();
     void requestCapture(const QString &savePath);
-
-    // BH1750 조도 임계값 설정 (기본값: 50 lux)
     void setLuxThreshold(float lux);
+
+    // Set to 1 after UI finishes displaying a frame (slot should call this)
+    QAtomicInt m_uiReady;
 
 signals:
     void frameReady(const QImage &frame);
     void captureSaved(const QString &path, bool ok, const QString &errorText);
     void cameraError(const QString &errorText);
-    // 조도 부족으로 촬영 거부 시 발생 (현재 lux, 임계값)
     void captureRejectedLowLight(float lux, float threshold);
+    void statusUpdate(const QString &msg);
 
 protected:
     void run() override;
 
 private:
-    static const int kMaxBuffer = 5;
+    static const int CAPTURE_MAX_BUFFER = 4;
 
-    struct BufferInfo {
-        unsigned int length = 0;
-        void *start = nullptr;
+    struct BufInfo {
+        int index;
+        unsigned int length;
+        void *start;
     };
 
-    int initCapture();
-    int configureFormat();
-    int startCapture();
-    int captureFrame();
-    int stopCapture();
+    struct VideoDev {
+        int fd;
+        int cap_width;
+        int cap_height;
+        BufInfo buff_info[CAPTURE_MAX_BUFFER];
+        int numbuffer;
+    } m_videodev;
+
+    int  initCapture();
+    int  startCapture();
+    int  captureFrame();
+    int  stopCapture();
     void closeCapture();
 
-    // BH1750 조도 센서 관련
-    bool initBH1750();
+    // BH1750
+    bool  initBH1750();
     float readLux();
-    void closeBH1750();
-
-    void yuyvToRgb(const unsigned char *yuyv, int width, int height, unsigned char *rgb);
-
-    int m_fd;
-    int m_width;
-    int m_height;
-    BufferInfo m_buffers[kMaxBuffer];
-    int m_bufferCount;
+    void  closeBH1750();
 
     bool m_running;
     QMutex m_captureLock;
     QString m_pendingCapturePath;
+    qint64 m_lastEmitMs;
 
-    // BH1750 I2C
-    int m_i2cFd;
+    int   m_i2cFd;
     float m_luxThreshold;
 };
 
