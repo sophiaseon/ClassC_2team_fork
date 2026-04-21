@@ -137,9 +137,18 @@ int AlarmCameraThread::initCapture()
     if (m_videodev.fd >= 0)
         return 0;
 
-    int fd = open("/dev/video7", O_RDWR | O_NONBLOCK | O_CLOEXEC);
+    static const char *candidates[] = { "/dev/video4", "/dev/video7", nullptr };
+    int fd = -1;
+    for (int i = 0; candidates[i]; ++i) {
+        fd = open(candidates[i], O_RDWR | O_NONBLOCK | O_CLOEXEC);
+        if (fd >= 0) {
+            qDebug() << "[Camera] opened" << candidates[i];
+            break;
+        }
+        qWarning() << "[Camera] open" << candidates[i] << "failed:" << strerror(errno);
+    }
     if (fd < 0) {
-        qWarning() << "[Camera] open /dev/video7 failed:" << strerror(errno);
+        qWarning() << "[Camera] no usable video device found";
         return -1;
     }
     videodev_init:
