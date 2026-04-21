@@ -409,7 +409,7 @@ void DismissDialog::showColorMemoryStep()
     const int color = m_colorSequence[m_colorShowIndex];
     setPreviewColor(color, true);
 
-    QTimer::singleShot(700, this, [this]() {  // 색 표시 시간 0.7초
+    QTimer::singleShot(700, this, [this]() {  // color display time: 0.7s
         setPreviewColor(-1, false);
         ++m_colorShowIndex;
         QTimer::singleShot(160, this, &DismissDialog::showColorMemoryStep);
@@ -627,7 +627,7 @@ void DismissDialog::buildCameraUi(const QStringList &alarmTimes)
         QPixmap px = QPixmap::fromImage(frame).scaled(
             m_cameraPreviewLabel->size(), Qt::KeepAspectRatio, Qt::FastTransformation);
         m_cameraPreviewLabel->setPixmap(px);
-        // storeRelease: ARM 메모리 순서 보장 (단순 = 대입은 ARM에서 reorder 가능)
+        // storeRelease: guarantees ARM memory ordering (plain assignment may reorder on ARM)
         m_cameraThread->m_uiReady.storeRelease(1);
     });
     connect(m_cameraThread, &AlarmCameraThread::captureSaved, this,
@@ -669,7 +669,7 @@ void DismissDialog::onButtonGameCountUpdated(int count)
     if (m_btnTargetLabel && m_gameEngine)
         m_btnTargetLabel->setText(
             QString("%1 / %2").arg(count).arg(m_gameEngine->targetCount()));
-    // 버튼 누를 때마다 즉시 상태 라벨 업데이트
+    // update status label immediately on each button press
     if (m_btnStatusLabel && m_gameEngine) {
         const int need = m_gameEngine->targetCount() - count;
         if (need > 0) {

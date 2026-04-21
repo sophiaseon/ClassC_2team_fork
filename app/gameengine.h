@@ -5,9 +5,9 @@
 
 // -------------------------------------------------------
 // GameEngine
-//   - 상태 머신: READY -> PLAYING -> SUCCESS / FAILURE
-//   - 일정 시간(GAME_DURATION초) 안에 TARGET 횟수만큼 버튼을 눌러야 SUCCESS
-//   - 횟수가 부족하거나 초과하면 FAILURE → restartGame() 으로 재시도
+//   - state machine: READY -> PLAYING -> SUCCESS / FAILURE
+//   - press the button TARGET times within GAME_DURATION seconds to SUCCESS
+//   - too few or too many presses → FAILURE; retry with restartGame()
 // -------------------------------------------------------
 class GameEngine : public QObject
 {

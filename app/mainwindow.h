@@ -11,6 +11,7 @@
 #include <QMainWindow>
 
 class ButtonWatcher;
+class QTcpServer;
 
 class QLabel;
 class QListWidget;
@@ -35,6 +36,7 @@ private slots:
     void setDebugAlarmPlus5Sec();
     void openStatDialog();
     void openAlarmStatDialog(int alarmIndex);
+    void openFriendStatDialog();
 
 private:
     void showStyledAlert(const QString &title, const QString &message);
@@ -60,6 +62,7 @@ private:
     void saveAlarmCounter();
     void saveAlarms();
     void loadAlarms();
+    void startAlarmServer();
 
     static QString alarmLogPath(int alarmId)
     { return QDir::homePath() + QString("/capture/alarm_%1.txt").arg(alarmId); }
@@ -76,11 +79,13 @@ private:
     QPushButton *m_deleteButton;
     QPushButton *m_debugPlus5SecButton;
     QPushButton *m_statButton;
+    QPushButton *m_friendButton;
     QPushButton *m_exitButton;
 
     QList<AlarmEntry> m_alarms;
     QProcess         *m_alarmPlayer;
     ButtonWatcher    *m_buttonWatcher;
+    QTcpServer       *m_alarmServer;
 
     int              m_nextAlarmId = 1;
     int              m_buzzerFd = -1;

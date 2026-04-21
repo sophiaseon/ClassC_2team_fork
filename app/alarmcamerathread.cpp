@@ -91,13 +91,13 @@ void AlarmCameraThread::run()
         qWarning() << "[Camera] BH1750 unavailable, lux check disabled";
 
     if (initCapture() < 0) {
-        emit cameraError("카메라 초기화 실패 (/dev/video0, /dev/video1)");
+        emit cameraError("Camera init failed (/dev/video0, /dev/video1)");
         setEthernetLink(true);
         return;
     }
 
     if (startCapture() < 0) {
-        emit cameraError("카메라 스트리밍 시작 실패");
+        emit cameraError("Camera streaming start failed");
         closeCapture();
         setEthernetLink(true);
         return;
@@ -302,7 +302,7 @@ int AlarmCameraThread::captureFrame()
         return -1;
     }
 
-    // ── 진단 카운터 ──────────────────────────────────────────────────────────
+    // ── diagnostic counters ───────────────────────────────────────────────────
     static int s_total = 0, s_dropped = 0;
     ++s_total;
     if (s_total % 30 == 0)

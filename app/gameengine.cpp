@@ -43,19 +43,19 @@ void GameEngine::onButtonPressed()
     emit countUpdated(m_count);
 
     if (m_count > m_targetCount) {
-        // 초과 즉시 실패
+        // overshoot: immediate failure
         m_countdownTimer.stop();
         m_successTimer.stop();
         setState(State::FAILURE);
         emit gameFailure();
         qDebug() << "[GameEngine] FAILURE - overshoot (" << m_count << ">" << m_targetCount << ")";
     } else if (m_count == m_targetCount) {
-        // 정확히 맞춤: min(3초, 남은시간) 후 성공
+        // exact match: success after min(3s, remaining time)
         const int waitMs = (m_secondsLeft > 3) ? 3000 : (m_secondsLeft * 1000);
         if (waitMs > 0) {
             m_successTimer.start(waitMs);
         } else {
-            // 남은 시간 0 - 즉시 성공
+            // no time remaining: immediate success
             m_countdownTimer.stop();
             setState(State::SUCCESS);
             emit gameSuccess();

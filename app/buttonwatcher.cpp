@@ -58,7 +58,7 @@ ButtonWatcher::ButtonWatcher(QObject *parent)
 
     if (m_fd < 0) {
         qDebug() << "[ButtonWatcher] open(/dev/mydev) FAILED, errno=" << errno
-                 << " — 커널 모듈이 로드됐는지, mknod로 장치 파일이 생성됐는지 확인하세요";
+                 << " — check if kernel module is loaded and device file exists (mknod)";
         return;
     }
     qDebug() << "[ButtonWatcher] open(/dev/mydev) OK, fd=" << m_fd;

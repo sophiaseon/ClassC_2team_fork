@@ -19,6 +19,7 @@
 #define BUZZER_DEVICE     "/dev/mybuzzer"
 #include <QComboBox>
 #include <QDir>
+#include <QHostAddress>
 #include <QPointer>
 #include <QDialog>
 #include <QFile>
@@ -26,9 +27,13 @@
 #include <QLabel>
 #include <QListWidget>
 #include <QListWidgetItem>
+#include <QInputDialog>
 #include <QMessageBox>
 #include <QProcess>
 #include <QPushButton>
+#include <QTcpServer>
+#include <QTcpSocket>
+#include <QTemporaryFile>
 #include <QTextStream>
 #include <QTimer>
 #include <QVBoxLayout>
@@ -101,9 +106,11 @@ MainWindow::MainWindow(QWidget *parent)
     , m_deleteButton(nullptr)
     , m_debugPlus5SecButton(nullptr)
     , m_statButton(nullptr)
+    , m_friendButton(nullptr)
     , m_exitButton(nullptr)
     , m_alarmPlayer(new QProcess(this))
     , m_buttonWatcher(new ButtonWatcher(this))
+    , m_alarmServer(nullptr)
 {
     // Open buzzer device lazily on first use (insmod may not have happened yet)
     // Install SIGUSR1 handler: empty (prevents process termination) but wakes
@@ -123,6 +130,9 @@ MainWindow::MainWindow(QWidget *parent)
     connect(m_deleteButton,       &QPushButton::clicked, this, &MainWindow::deleteSelectedAlarm);
     connect(m_debugPlus5SecButton,&QPushButton::clicked, this, &MainWindow::setDebugAlarmPlus5Sec);
     connect(m_statButton,         &QPushButton::clicked, this, &MainWindow::openStatDialog);
+    connect(m_friendButton,        &QPushButton::clicked, this, &MainWindow::openFriendStatDialog);
+
+    startAlarmServer();
 
     m_clockTimer->start(1000);
     updateCurrentTime();
@@ -221,6 +231,14 @@ void MainWindow::buildUi()
         "QPushButton:pressed { background: #5f4428; }"
     );
 
+    m_friendButton = new QPushButton("Friend", this);
+    m_friendButton->setFixedSize(80, 40);
+    m_friendButton->setStyleSheet(
+        "QPushButton { font-size: 17px; font-weight: 700; color: white;"
+        "    background: #3a6a9a; border: none; border-radius: 8px; }"
+        "QPushButton:pressed { background: #2a5077; }"
+    );
+
     m_exitButton = new QPushButton("Exit", this);
     m_exitButton->setFixedSize(80, 40);
     m_exitButton->setStyleSheet(
@@ -235,6 +253,7 @@ void MainWindow::buildUi()
     topBar->addSpacing(12);
     topBar->addWidget(m_debugPlus5SecButton);
     topBar->addWidget(m_statButton);
+    topBar->addWidget(m_friendButton);
     topBar->addWidget(m_exitButton);
 
     // ── alarm count label ──
@@ -867,7 +886,186 @@ void MainWindow::openStatDialog()
     StatDialog dlg(QDir::homePath() + "/alarm.txt", this);
     dlg.exec();
 }
+// ── openFriendStatDialog ───────────────────────────────────────────
+void MainWindow::openFriendStatDialog()
+{
+    static const quint16 ALARM_PORT = 45678;
+    static const int TIMEOUT_MS = 5000;
+    const QString ipFilePath = QDir::homePath() + "/friend_ip.txt";
 
+    // Load saved IP, or prompt the user to enter one
+    QString friendIp;
+    QFile ipFile(ipFilePath);
+    if (ipFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        friendIp = QString::fromUtf8(ipFile.readAll()).trimmed();
+        ipFile.close();
+    }
+
+    if (friendIp.isEmpty()) {
+        // ── On-screen IP keypad dialog ────────────────────────────────────
+        QDialog ipDlg(this);
+        ipDlg.setWindowTitle("Friend's IP");
+        ipDlg.setFixedSize(420, 420);
+        ipDlg.setStyleSheet(
+            "QDialog { background: #0b0b0b; border: 2px solid #ffffff; border-radius: 4px; }"
+        );
+
+        QVBoxLayout *dlgRoot = new QVBoxLayout(&ipDlg);
+        dlgRoot->setContentsMargins(20, 16, 20, 16);
+        dlgRoot->setSpacing(12);
+
+        QLabel *hint = new QLabel("Enter friend's IP address", &ipDlg);
+        hint->setAlignment(Qt::AlignCenter);
+        hint->setStyleSheet("QLabel { font-size: 15px; color: #aaaaaa; }");
+        dlgRoot->addWidget(hint);
+
+        QLabel *display = new QLabel("", &ipDlg);
+        display->setAlignment(Qt::AlignCenter);
+        display->setFixedHeight(52);
+        display->setStyleSheet(
+            "QLabel { font-size: 24px; font-weight: 700; color: white;"
+            "    background: #1e1e1e; border: 1px solid #3a3a3a;"
+            "    border-radius: 8px; padding: 0 12px; }"
+        );
+        dlgRoot->addWidget(display);
+
+        // Keypad: 1-9, ., 0, backspace
+        QGridLayout *grid = new QGridLayout();
+        grid->setSpacing(8);
+
+        auto makeKey = [&](const QString &label, const QString &bg, const QString &bgPress) -> QPushButton * {
+            QPushButton *btn = new QPushButton(label, &ipDlg);
+            btn->setFixedSize(88, 60);
+            btn->setStyleSheet(
+                QString("QPushButton { font-size: 20px; font-weight: 700; color: white;"
+                        "    background: %1; border: none; border-radius: 8px; }"
+                        "QPushButton:pressed { background: %2; }").arg(bg, bgPress)
+            );
+            return btn;
+        };
+
+        const struct { QString lbl; int row; int col; } keys[] = {
+            {"1",0,0},{"2",0,1},{"3",0,2},
+            {"4",1,0},{"5",1,1},{"6",1,2},
+            {"7",2,0},{"8",2,1},{"9",2,2},
+            {".",3,0},{"0",3,1},
+        };
+        for (const auto &k : keys) {
+            QPushButton *btn = makeKey(k.lbl, "#2a2a2a", "#444444");
+            grid->addWidget(btn, k.row, k.col);
+            const QString ch = k.lbl;
+            connect(btn, &QPushButton::clicked, &ipDlg, [display, ch]() {
+                if (display->text().length() < 15)
+                    display->setText(display->text() + ch);
+            });
+        }
+
+        QPushButton *bksp = makeKey("<", "#5a3a3a", "#7a2a2a");
+        grid->addWidget(bksp, 3, 2);
+        connect(bksp, &QPushButton::clicked, &ipDlg, [display]() {
+            const QString t = display->text();
+            if (!t.isEmpty()) display->setText(t.left(t.length() - 1));
+        });
+
+        dlgRoot->addLayout(grid);
+
+        QHBoxLayout *btnRow = new QHBoxLayout();
+        btnRow->setSpacing(12);
+        QPushButton *cancelBtn = makeKey("Cancel", "#cc3333", "#992222");
+        cancelBtn->setFixedWidth(160);
+        QPushButton *okBtn     = makeKey("OK",     "#3a6a9a", "#2a5077");
+        okBtn->setFixedWidth(160);
+        btnRow->addWidget(cancelBtn);
+        btnRow->addWidget(okBtn);
+        dlgRoot->addLayout(btnRow);
+
+        connect(cancelBtn, &QPushButton::clicked, &ipDlg, &QDialog::reject);
+        connect(okBtn,     &QPushButton::clicked, &ipDlg, [&]() {
+            if (!display->text().trimmed().isEmpty()) ipDlg.accept();
+        });
+
+        if (ipDlg.exec() != QDialog::Accepted) return;
+        friendIp = display->text().trimmed();
+        if (friendIp.isEmpty()) return;
+
+        // Persist for next time
+        QFile out(ipFilePath);
+        if (out.open(QIODevice::WriteOnly | QIODevice::Text | QIODevice::Truncate))
+            out.write(friendIp.toUtf8());
+    }
+
+    m_friendButton->setEnabled(false);
+    QTimer::singleShot(1000, this, [this]() { m_friendButton->setEnabled(true); });
+
+    QTcpSocket socket;
+    socket.connectToHost(friendIp, ALARM_PORT);
+    if (!socket.waitForConnected(TIMEOUT_MS)) {
+        showStyledAlert("Friend Stat",
+            QString("Cannot connect to friend's board.\n(%1)").arg(socket.errorString()));
+        return;
+    }
+
+    // Receive until server closes the connection
+    QByteArray data;
+    while (socket.waitForReadyRead(TIMEOUT_MS))
+        data += socket.readAll();
+    data += socket.readAll(); // drain any remaining buffered bytes
+    socket.disconnectFromHost();
+
+    if (data.isEmpty()) {
+        showStyledAlert("Friend Stat", "No data received from friend's board.");
+        return;
+    }
+
+    // Write received data to a temp file so StatDialog can read it
+    QTemporaryFile tmp;
+    tmp.setAutoRemove(true);
+    if (!tmp.open()) {
+        showStyledAlert("Friend Stat", "Failed to create temporary file");
+        return;
+    }
+    tmp.write(data);
+    tmp.flush();
+
+    StatDialog dlg(tmp.fileName(), this,
+        QString("Friend's Alarm Statistics (%1)").arg(friendIp));
+    dlg.exec();
+}
+
+// ── startAlarmServer ────────────────────────────────────────────────
+void MainWindow::startAlarmServer()
+{
+    static const quint16 ALARM_PORT = 45678;
+
+    m_alarmServer = new QTcpServer(this);
+    if (!m_alarmServer->listen(QHostAddress::Any, ALARM_PORT)) {
+        qWarning() << "[AlarmServer] Failed to listen on port" << ALARM_PORT
+                   << ":" << m_alarmServer->errorString();
+        return;
+    }
+    qDebug() << "[AlarmServer] Listening on port" << ALARM_PORT;
+
+    connect(m_alarmServer, &QTcpServer::newConnection, this, [this]() {
+        QTcpSocket *sock = m_alarmServer->nextPendingConnection();
+        if (!sock) return;
+
+        QFile f(QDir::homePath() + "/alarm.txt");
+        QByteArray payload;
+        if (f.open(QIODevice::ReadOnly))
+            payload = f.readAll();
+
+        sock->write(payload);
+        // Close connection after all bytes are written
+        connect(sock, &QTcpSocket::bytesWritten, sock, [sock](qint64) {
+            if (sock->bytesToWrite() == 0)
+                sock->disconnectFromHost();
+        });
+        // If the write buffer was already empty (e.g. empty file), disconnect now
+        if (sock->bytesToWrite() == 0)
+            sock->disconnectFromHost();
+        connect(sock, &QTcpSocket::disconnected, sock, &QObject::deleteLater);
+    });
+}
 // ── openAlarmStatDialog ───────────────────────────────────────────────────────
 void MainWindow::openAlarmStatDialog(int alarmIndex)
 {
