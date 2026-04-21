@@ -469,14 +469,21 @@ void MainWindow::updateCurrentTime()
     if (m_alarmHandling) return;
     m_alarmHandling = true;
 
-    // Play sound (first triggered alarm's choice)
+    // Play sound — loop until dialog is dismissed
     const QString &soundFile = triggered.first().soundFile;
+    QMetaObject::Connection loopConn;
     if (soundFile == "buzzer:tetris") {
         startBuzzerTetris();
     } else {
-        if (m_alarmPlayer->state() == QProcess::NotRunning) {
+        // Reconnect on each finish so the sound loops while the dialog is open.
+        loopConn = connect(m_alarmPlayer,
+                           QOverload<int,QProcess::ExitStatus>::of(&QProcess::finished),
+                           this, [this, soundFile]() {
+            if (m_alarmHandling)
+                m_alarmPlayer->start("aplay", QStringList() << "-D" << "hw:3,0" << soundFile);
+        });
+        if (m_alarmPlayer->state() == QProcess::NotRunning)
             m_alarmPlayer->start("aplay", QStringList() << "-D" << "hw:3,0" << soundFile);
-        }
     }
 
     // Collect alarm times and determine mode priority: Camera > Button > Ultrasonic > Game > Simple
@@ -524,6 +531,11 @@ void MainWindow::updateCurrentTime()
                 &dlg, &DismissDialog::captureByButton);
     }
     dlg.exec();
+
+    // Stop loop: disconnect before terminate so the finished signal
+    // doesn't restart aplay after we've already killed it.
+    if (loopConn)
+        disconnect(loopConn);
 
     const QString capturedPhotoPath = dlg.capturedPhotoPath();
 

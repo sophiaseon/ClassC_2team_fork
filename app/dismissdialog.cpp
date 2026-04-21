@@ -625,8 +625,10 @@ void DismissDialog::buildCameraUi(const QStringList &alarmTimes)
     connect(m_cameraThread, &AlarmCameraThread::frameReady, this, [this](const QImage &frame) {
         if (!m_cameraPreviewLabel) return;
         QPixmap px = QPixmap::fromImage(frame).scaled(
-            m_cameraPreviewLabel->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation);
+            m_cameraPreviewLabel->size(), Qt::KeepAspectRatio, Qt::FastTransformation);
         m_cameraPreviewLabel->setPixmap(px);
+        // storeRelease: ARM 메모리 순서 보장 (단순 = 대입은 ARM에서 reorder 가능)
+        m_cameraThread->m_uiReady.storeRelease(1);
     });
     connect(m_cameraThread, &AlarmCameraThread::captureSaved, this,
             [this](const QString &path, bool ok, const QString &errorText) {
@@ -651,6 +653,10 @@ void DismissDialog::buildCameraUi(const QStringList &alarmTimes)
                         QString("Too dark to capture (%.1f lux, need %.0f). Press button again when brighter.")
                             .arg(static_cast<double>(lux))
                             .arg(static_cast<double>(threshold)));
+            });
+    connect(m_cameraThread, &AlarmCameraThread::statusUpdate, this,
+            [this](const QString &msg) {
+                if (m_cameraStatusLabel) m_cameraStatusLabel->setText(msg);
             });
     m_cameraThread->start();
 }
