@@ -19,8 +19,8 @@ class DismissDialog : public QDialog
     Q_OBJECT
 
 public:
-    enum Mode { Simple, Game, Button, Camera, Ultrasonic };
-    enum GameType { NumberOrder = 0, ColorMemory = 1 };
+    enum Mode { Simple, Game, Button, Camera };
+    enum GameType { NumberOrder = 0, ColorMemory = 1, Ultrasonic = 2 };
 
     explicit DismissDialog(const QStringList &alarmTimes,
                            Mode mode,

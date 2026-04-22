@@ -23,13 +23,13 @@ public:
         DismissSimple = 0,
         DismissGame = 1,
         DismissButton = 2,
-        DismissCamera = 3,
-        DismissUltrasonic = 4
+        DismissCamera = 3
     };
 
     enum GameType {
         GameNumberOrder = 0,
-        GameColorMemory = 1
+        GameColorMemory = 1,
+        GameUltrasonic  = 2
     };
 
     explicit AlarmDialog(QWidget *parent = nullptr,
@@ -115,7 +115,6 @@ private:
     QPushButton *m_gameModeBtn;
     QPushButton *m_buttonModeBtn;
     QPushButton *m_cameraModeBtn;
-    QPushButton *m_ultrasonicModeBtn;
 };
 
 #endif // ALARMDIALOG_H

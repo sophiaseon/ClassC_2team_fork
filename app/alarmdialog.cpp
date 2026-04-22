@@ -117,7 +117,6 @@ AlarmDialog::AlarmDialog(QWidget *parent,
     , m_gameModeBtn(nullptr)
     , m_buttonModeBtn(nullptr)
     , m_cameraModeBtn(nullptr)
-    , m_ultrasonicModeBtn(nullptr)
     , m_repeatTimer(new QTimer(this))
     , m_repeatCount(0)
 {
@@ -318,11 +317,9 @@ void AlarmDialog::buildUi()
     m_gameModeBtn = new QPushButton("Game", this);
     m_buttonModeBtn = new QPushButton("Button", this);
     m_cameraModeBtn = new QPushButton("Camera", this);
-    m_ultrasonicModeBtn = new QPushButton("Ultrasonic", this);
-
     QList<QPushButton *> modeButtons;
     modeButtons << m_simpleModeBtn << m_gameModeBtn << m_buttonModeBtn
-                << m_cameraModeBtn << m_ultrasonicModeBtn;
+                << m_cameraModeBtn;
     for (QPushButton *btn : modeButtons) {
         btn->setFixedHeight(44);
         modeBtnRow->addWidget(btn, 1);
@@ -331,6 +328,7 @@ void AlarmDialog::buildUi()
     m_gameCombo = makeCombo(40);
     m_gameCombo->addItem("Number Order (1-25)", GameNumberOrder);
     m_gameCombo->addItem("Color Memory (5-6-7)", GameColorMemory);
+    m_gameCombo->addItem("Ultrasonic (Hand Wave)", GameUltrasonic);
 
     m_gameOptionStack = new QStackedWidget(this);
     m_gameOptionStack->setFixedHeight(52);
@@ -404,13 +402,6 @@ void AlarmDialog::buildUi()
         m_dismissMode = DismissCamera;
         refreshModeStyle();
     });
-    connect(m_ultrasonicModeBtn, &QPushButton::clicked, this, [this]() {
-        m_ultrasonicModeBtn->setEnabled(false);
-        QTimer::singleShot(500, this, [this]() { m_ultrasonicModeBtn->setEnabled(true); });
-        m_dismissMode = DismissUltrasonic;
-        refreshModeStyle();
-    });
-
     // m_gameCombo: activated fires only on user popup selection (not programmatic setCurrentIndex)
     connect(m_gameCombo, QOverload<int>::of(&QComboBox::activated), this, [this](int idx) {
         m_gameType = m_gameCombo->itemData(idx).toInt();
@@ -462,7 +453,6 @@ void AlarmDialog::refreshModeStyle()
     m_gameModeBtn->setStyleSheet(m_dismissMode == DismissGame ? on : off);
     m_buttonModeBtn->setStyleSheet(m_dismissMode == DismissButton ? on : off);
     m_cameraModeBtn->setStyleSheet(m_dismissMode == DismissCamera ? on : off);
-    m_ultrasonicModeBtn->setStyleSheet(m_dismissMode == DismissUltrasonic ? on : off);
     m_gameOptionStack->setCurrentIndex(m_dismissMode == DismissGame ? 1 : 0);
 }
 

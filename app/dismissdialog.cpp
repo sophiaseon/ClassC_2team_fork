@@ -59,8 +59,8 @@ DismissDialog::DismissDialog(const QStringList &alarmTimes,
     setWindowTitle("Alarm!");
     setStyleSheet("QDialog { background: #0b0b0b; border: 2px solid #ffffff; border-radius: 4px; }");
 
-    // Block OS close button for game/button/ultrasonic mode
-    if (m_mode == Game || m_mode == Button || m_mode == Camera || m_mode == Ultrasonic) {
+    // Block OS close button for game/button/camera mode
+    if (m_mode == Game || m_mode == Button || m_mode == Camera) {
         setWindowFlags(windowFlags() & ~Qt::WindowCloseButtonHint);
     }
 
@@ -70,8 +70,6 @@ DismissDialog::DismissDialog(const QStringList &alarmTimes,
         buildGameUi(alarmTimes);
     } else if (m_mode == Camera) {
         buildCameraUi(alarmTimes);
-    } else if (m_mode == Ultrasonic) {
-        buildUltrasonicUi(alarmTimes);
     } else {
         buildButtonUi(alarmTimes);
     }
@@ -97,7 +95,7 @@ QString DismissDialog::capturedPhotoPath() const
 
 void DismissDialog::closeEvent(QCloseEvent *event)
 {
-    if (m_mode == Game || m_mode == Button || m_mode == Camera || m_mode == Ultrasonic) {
+    if (m_mode == Game || m_mode == Button || m_mode == Camera) {
         event->ignore();
     } else {
         event->accept();
@@ -106,7 +104,7 @@ void DismissDialog::closeEvent(QCloseEvent *event)
 
 void DismissDialog::reject()
 {
-    if (m_mode == Game || m_mode == Button || m_mode == Camera || m_mode == Ultrasonic) {
+    if (m_mode == Game || m_mode == Button || m_mode == Camera) {
         return;
     }
     QDialog::reject();
@@ -154,7 +152,9 @@ void DismissDialog::buildSimpleUi(const QStringList &alarmTimes)
 
 void DismissDialog::buildGameUi(const QStringList &alarmTimes)
 {
-    if (m_gameType == ColorMemory) {
+    if (m_gameType == Ultrasonic) {
+        buildUltrasonicUi(alarmTimes);
+    } else if (m_gameType == ColorMemory) {
         buildColorMemoryGameUi(alarmTimes);
     } else {
         buildNumberOrderGameUi(alarmTimes);

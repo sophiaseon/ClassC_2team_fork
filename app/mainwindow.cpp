@@ -509,29 +509,29 @@ void MainWindow::updateCurrentTime()
 
     // Collect alarm times and determine mode priority: Camera > Button > Ultrasonic > Game > Simple
     QStringList alarmTimes;
-    bool needGame       = false;
-    bool needButton     = false;
-    bool needCamera     = false;
-    bool needUltrasonic = false;
+    bool needGame   = false;
+    bool needButton = false;
+    bool needCamera = false;
     DismissDialog::GameType selectedGameType = DismissDialog::NumberOrder;
     for (const TriggeredInfo &t : triggered) {
         alarmTimes << t.alarmTime;
         if (t.dismissMode == AlarmDialog::DismissGame) {
             needGame = true;
-            selectedGameType = (t.gameType == AlarmDialog::GameColorMemory)
-                ? DismissDialog::ColorMemory
-                : DismissDialog::NumberOrder;
+            if (t.gameType == AlarmDialog::GameColorMemory)
+                selectedGameType = DismissDialog::ColorMemory;
+            else if (t.gameType == AlarmDialog::GameUltrasonic)
+                selectedGameType = DismissDialog::Ultrasonic;
+            else
+                selectedGameType = DismissDialog::NumberOrder;
         }
-        if (t.dismissMode == AlarmDialog::DismissButton)     needButton     = true;
-        if (t.dismissMode == AlarmDialog::DismissCamera)     needCamera     = true;
-        if (t.dismissMode == AlarmDialog::DismissUltrasonic) needUltrasonic = true;
+        if (t.dismissMode == AlarmDialog::DismissButton) needButton = true;
+        if (t.dismissMode == AlarmDialog::DismissCamera) needCamera = true;
     }
 
     DismissDialog::Mode dlgMode = DismissDialog::Simple;
-    if (needCamera)         dlgMode = DismissDialog::Camera;
-    else if (needButton)    dlgMode = DismissDialog::Button;
-    else if (needUltrasonic) dlgMode = DismissDialog::Ultrasonic;
-    else if (needGame)      dlgMode = DismissDialog::Game;
+    if (needCamera)      dlgMode = DismissDialog::Camera;
+    else if (needButton) dlgMode = DismissDialog::Button;
+    else if (needGame)   dlgMode = DismissDialog::Game;
 
     // Show appropriate dismiss dialog
     int dlgAlarmId = -1;
@@ -815,6 +815,7 @@ void MainWindow::setDebugAlarmPlus5Sec()
     QComboBox *gameCombo = new QComboBox(&dlg);
     gameCombo->addItem("Number Order (1-25)", AlarmDialog::GameNumberOrder);
     gameCombo->addItem("Color Memory (5-6-7)", AlarmDialog::GameColorMemory);
+    gameCombo->addItem("Ultrasonic (Hand Wave)", AlarmDialog::GameUltrasonic);
     gameCombo->setFixedHeight(38);
     root->addWidget(gameCombo);
 
@@ -890,20 +891,38 @@ void MainWindow::openStatDialog()
 // ── openFriendStatDialog ───────────────────────────────────────────
 void MainWindow::openFriendStatDialog()
 {
-    static const quint16 ALARM_PORT = 45678;
-    static const int TIMEOUT_MS = 5000;
-    const QString ipFilePath = QDir::homePath() + "/friend_ip.txt";
+    const QString friendsFile = QDir::homePath() + "/friends.json";
 
-    // Load saved IP, or prompt the user to enter one
-    QString friendIp;
-    QFile ipFile(ipFilePath);
-    if (ipFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        friendIp = QString::fromUtf8(ipFile.readAll()).trimmed();
-        ipFile.close();
+    // ── load / save helpers ───────────────────────────────────────────
+    auto loadFriends = [&]() -> QStringList {
+        QFile f(friendsFile);
+        if (!f.open(QIODevice::ReadOnly)) return {};
+        const QJsonDocument doc = QJsonDocument::fromJson(f.readAll());
+        QStringList ips;
+        if (doc.isArray())
+            for (const QJsonValue &v : doc.array())
+                if (v.isString()) ips << v.toString();
+        return ips;
+    };
+    auto saveFriends = [&](const QStringList &ips) {
+        QJsonArray arr;
+        for (const QString &ip : ips) arr.append(ip);
+        QFile f(friendsFile);
+        if (f.open(QIODevice::WriteOnly | QIODevice::Truncate))
+            f.write(QJsonDocument(arr).toJson(QJsonDocument::Compact));
+    };
+
+    // One-time migration: import old single-IP file into the new JSON list
+    if (!QFile::exists(friendsFile)) {
+        QFile old(QDir::homePath() + "/friend_ip.txt");
+        if (old.open(QIODevice::ReadOnly)) {
+            const QString ip = QString::fromUtf8(old.readAll()).trimmed();
+            if (!ip.isEmpty()) saveFriends({ip});
+        }
     }
 
-    if (friendIp.isEmpty()) {
-        // ── On-screen IP keypad dialog ────────────────────────────────────
+    // ── IP keypad dialog ──────────────────────────────────────────────
+    auto promptIp = [this]() -> QString {
         QDialog ipDlg(this);
         ipDlg.setWindowTitle("Friend's IP");
         ipDlg.setFixedSize(420, 420);
@@ -930,7 +949,6 @@ void MainWindow::openFriendStatDialog()
         );
         dlgRoot->addWidget(display);
 
-        // Keypad: 1-9, ., 0, backspace
         QGridLayout *grid = new QGridLayout();
         grid->setSpacing(8);
 
@@ -960,92 +978,211 @@ void MainWindow::openFriendStatDialog()
                     display->setText(display->text() + ch);
             });
         }
-
         QPushButton *bksp = makeKey("<", "#5a3a3a", "#7a2a2a");
         grid->addWidget(bksp, 3, 2);
         connect(bksp, &QPushButton::clicked, &ipDlg, [display]() {
             const QString t = display->text();
             if (!t.isEmpty()) display->setText(t.left(t.length() - 1));
         });
-
         dlgRoot->addLayout(grid);
 
-        QHBoxLayout *btnRow = new QHBoxLayout();
-        btnRow->setSpacing(12);
+        QHBoxLayout *kbdBtnRow = new QHBoxLayout();
+        kbdBtnRow->setSpacing(12);
         QPushButton *cancelBtn = makeKey("Cancel", "#cc3333", "#992222");
         cancelBtn->setFixedWidth(160);
-        QPushButton *okBtn     = makeKey("OK",     "#3a6a9a", "#2a5077");
+        QPushButton *okBtn = makeKey("OK", "#3a6a9a", "#2a5077");
         okBtn->setFixedWidth(160);
-        btnRow->addWidget(cancelBtn);
-        btnRow->addWidget(okBtn);
-        dlgRoot->addLayout(btnRow);
+        kbdBtnRow->addWidget(cancelBtn);
+        kbdBtnRow->addWidget(okBtn);
+        dlgRoot->addLayout(kbdBtnRow);
 
         connect(cancelBtn, &QPushButton::clicked, &ipDlg, &QDialog::reject);
-        connect(okBtn,     &QPushButton::clicked, &ipDlg, [&]() {
+        connect(okBtn, &QPushButton::clicked, &ipDlg, [&]() {
             if (!display->text().trimmed().isEmpty()) ipDlg.accept();
         });
 
-        if (ipDlg.exec() != QDialog::Accepted) return;
-        friendIp = display->text().trimmed();
-        if (friendIp.isEmpty()) return;
+        if (ipDlg.exec() != QDialog::Accepted) return QString();
+        return display->text().trimmed();
+    };
 
-        // Persist for next time
-        QFile out(ipFilePath);
-        if (out.open(QIODevice::WriteOnly | QIODevice::Text | QIODevice::Truncate))
-            out.write(friendIp.toUtf8());
-    }
+    // ── connect to friend and show stat dialog ────────────────────────
+    auto connectAndShow = [this](const QString &friendIp) {
+        static const quint16 PORT = 45678;
+        static const int     TMO  = 5000;
+        QTcpSocket socket;
+        QEventLoop  loop;
+        QTimer      timer;
+        timer.setSingleShot(true);
+        bool connected = false;
 
-    m_friendButton->setEnabled(false);
-
-    // Use a local QEventLoop so the GUI event loop keeps running during the
-    // entire network transaction.  This guarantees our own QTcpServer can
-    // still fire newConnection while we are waiting for the friend's reply.
-    QTcpSocket socket;
-    QEventLoop  loop;
-    QTimer      timer;
-    timer.setSingleShot(true);
-    bool connected = false;
-
-    // ── Connection phase ──────────────────────────────────────────────
-    connect(&socket, &QTcpSocket::connected,     this, [&]() { connected = true; loop.quit(); });
-    connect(&socket, &QTcpSocket::disconnected,  &loop, &QEventLoop::quit);
-    connect(&timer,  &QTimer::timeout,           &loop, &QEventLoop::quit);
-    timer.start(TIMEOUT_MS);
-    socket.connectToHost(friendIp, ALARM_PORT);
-    loop.exec();
-    timer.stop();
-
-    m_friendButton->setEnabled(true);
-    if (!connected) {
-        showStyledAlert("Friend Stat",
-            QString("Cannot connect to friend's board.\n(%1)").arg(socket.errorString()));
-        return;
-    }
-
-    // Ask the server for the alarm log
-    socket.write("GET_LOG\n");
-
-    // ── Receive phase ─────────────────────────────────────────────────
-    // Grab any bytes already in the buffer, then wait for the server to
-    // close the connection (which signals "all data sent").
-    QByteArray data;
-    connect(&socket, &QTcpSocket::readyRead, this, [&]() { data += socket.readAll(); });
-    // disconnected already wired to loop.quit() above
-    timer.start(TIMEOUT_MS);
-    data += socket.readAll(); // drain anything buffered before exec()
-    if (socket.state() != QAbstractSocket::UnconnectedState)
+        connect(&socket, &QTcpSocket::connected,    this, [&]() { connected = true; loop.quit(); });
+        connect(&socket, &QTcpSocket::disconnected, &loop, &QEventLoop::quit);
+        connect(&timer,  &QTimer::timeout,          &loop, &QEventLoop::quit);
+        timer.start(TMO);
+        socket.connectToHost(friendIp, PORT);
         loop.exec();
-    timer.stop();
-    data += socket.readAll(); // final drain
-    socket.disconnectFromHost();
+        timer.stop();
 
-    if (data.isEmpty()) {
-        showStyledAlert("Friend Stat", "No data received from friend's board.");
-        return;
-    }
+        if (!connected) {
+            showStyledAlert("Friend Stat",
+                QString("Cannot connect to %1.\n(%2)").arg(friendIp, socket.errorString()));
+            return;
+        }
 
-    StatDialog dlg(data, friendIp, this,
-        QString("Friend's Alarm Statistics (%1)").arg(friendIp));
+        socket.write("GET_LOG\n");
+
+        QByteArray data;
+        connect(&socket, &QTcpSocket::readyRead, this, [&]() { data += socket.readAll(); });
+        timer.start(TMO);
+        data += socket.readAll();
+        if (socket.state() != QAbstractSocket::UnconnectedState)
+            loop.exec();
+        timer.stop();
+        data += socket.readAll();
+        socket.disconnectFromHost();
+
+        if (data.isEmpty()) {
+            showStyledAlert("Friend Stat", "No data received from " + friendIp);
+            return;
+        }
+
+        StatDialog statDlg(data, friendIp, this,
+            QString("Friend's Stats (%1)").arg(friendIp));
+        statDlg.exec();
+    };
+
+    // ── main friend list dialog ───────────────────────────────────────
+    QStringList friends = loadFriends();
+
+    QDialog dlg(this);
+    dlg.setWindowTitle("Friends");
+    dlg.setFixedSize(540, 460);
+    dlg.setStyleSheet(
+        "QDialog { background: #0b0b0b; border: 2px solid #ffffff; border-radius: 4px; }"
+    );
+
+    QVBoxLayout *root = new QVBoxLayout(&dlg);
+    root->setContentsMargins(20, 16, 20, 16);
+    root->setSpacing(12);
+
+    QLabel *titleLbl = new QLabel("Friend List", &dlg);
+    titleLbl->setAlignment(Qt::AlignCenter);
+    titleLbl->setStyleSheet("QLabel { font-size: 18px; font-weight: 700; color: white; }");
+    root->addWidget(titleLbl);
+
+    QListWidget *listWgt = new QListWidget(&dlg);
+    listWgt->setStyleSheet(
+        "QListWidget { background: #141414; border: 1px solid #3a3a3a;"
+        "    border-radius: 8px; color: white; padding: 4px; outline: none; }"
+        "QListWidget::item { border-radius: 4px; }"
+        "QListWidget::item:selected { background: #1e1e1e; }"
+    );
+    root->addWidget(listWgt, 1);
+
+    std::function<void()> rebuildList;
+    rebuildList = [&]() {
+        listWgt->clear();
+        if (friends.isEmpty()) {
+            QListWidgetItem *empty = new QListWidgetItem("No friends added yet.", listWgt);
+            empty->setForeground(QColor("#888888"));
+            empty->setFlags(empty->flags() & ~Qt::ItemIsEnabled);
+            return;
+        }
+        for (int i = 0; i < friends.size(); ++i) {
+            const QString ip = friends.at(i);
+
+            QWidget *row = new QWidget(listWgt);
+            row->setStyleSheet("background: transparent;");
+            QHBoxLayout *hl = new QHBoxLayout(row);
+            hl->setContentsMargins(10, 4, 10, 4);
+            hl->setSpacing(8);
+
+            QLabel *lbl = new QLabel(
+                QString("Friend %1  —  %2").arg(i + 1).arg(ip), row);
+            lbl->setStyleSheet(
+                "QLabel { font-size: 16px; color: white; background: transparent; }");
+
+            QPushButton *viewBtn = new QPushButton("View", row);
+            viewBtn->setFixedSize(72, 34);
+            viewBtn->setStyleSheet(
+                "QPushButton { font-size: 14px; font-weight: 700; color: white;"
+                "    background: #3a6a9a; border: none; border-radius: 7px; }"
+                "QPushButton:pressed { background: #2a5077; }"
+            );
+            QPushButton *delBtn = new QPushButton("Del", row);
+            delBtn->setFixedSize(52, 34);
+            delBtn->setStyleSheet(
+                "QPushButton { font-size: 14px; font-weight: 700; color: white;"
+                "    background: #8b3a3a; border: none; border-radius: 7px; }"
+                "QPushButton:pressed { background: #6a2a2a; }"
+            );
+
+            hl->addWidget(lbl, 1);
+            hl->addWidget(viewBtn);
+            hl->addWidget(delBtn);
+
+            // Use QPointer so that if the list is rebuilt during connection,
+            // we don't access a deleted button.
+            connect(viewBtn, &QPushButton::clicked, &dlg,
+                    [ip, &connectAndShow, viewBtn = QPointer<QPushButton>(viewBtn)]() {
+                        if (viewBtn) viewBtn->setEnabled(false);
+                        connectAndShow(ip);
+                        if (viewBtn) viewBtn->setEnabled(true);
+                    });
+            connect(delBtn, &QPushButton::clicked, &dlg,
+                    [i, &friends, &saveFriends, &rebuildList, listWgt]() {
+                        if (i >= 0 && i < friends.size()) friends.removeAt(i);
+                        saveFriends(friends);
+                        QTimer::singleShot(0, listWgt,
+                            [&rebuildList]() { rebuildList(); });
+                    });
+
+            QListWidgetItem *item = new QListWidgetItem(listWgt);
+            item->setSizeHint(QSize(0, 50));
+            listWgt->addItem(item);
+            listWgt->setItemWidget(item, row);
+        }
+    };
+    rebuildList();
+
+    QHBoxLayout *btnRow = new QHBoxLayout();
+    btnRow->setSpacing(12);
+
+    QPushButton *addBtn = new QPushButton("+ Add Friend", &dlg);
+    addBtn->setFixedHeight(44);
+    addBtn->setStyleSheet(
+        "QPushButton { font-size: 16px; font-weight: 700; color: white;"
+        "    background: #3a7a3a; border: none; border-radius: 9px; }"
+        "QPushButton:pressed { background: #2c5f2c; }"
+    );
+    QPushButton *closeBtn = new QPushButton("Close", &dlg);
+    closeBtn->setFixedHeight(44);
+    closeBtn->setStyleSheet(
+        "QPushButton { font-size: 16px; font-weight: 700; color: white;"
+        "    background: #555555; border: none; border-radius: 9px; }"
+        "QPushButton:pressed { background: #333333; }"
+    );
+
+    connect(addBtn, &QPushButton::clicked, &dlg, [&]() {
+        addBtn->setEnabled(false);
+        const QString ip = promptIp();
+        addBtn->setEnabled(true);
+        if (ip.isEmpty()) return;
+        if (friends.contains(ip)) {
+            showStyledAlert("Already Exists",
+                ip + " is already in your friend list.");
+            return;
+        }
+        friends.append(ip);
+        saveFriends(friends);
+        rebuildList();
+    });
+    connect(closeBtn, &QPushButton::clicked, &dlg, &QDialog::accept);
+
+    btnRow->addWidget(addBtn, 1);
+    btnRow->addWidget(closeBtn, 1);
+    root->addLayout(btnRow);
+
     dlg.exec();
 }
 
