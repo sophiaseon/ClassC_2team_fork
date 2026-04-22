@@ -750,9 +750,9 @@ void MainWindow::setDebugAlarmPlus5Sec()
     root->addWidget(modeCombo);
 
     QComboBox *gameCombo = new QComboBox(&dlg);
-    gameCombo->addItem("Number Order (1-25)", AlarmDialog::GameNumberOrder);
-    gameCombo->addItem("Color Memory (5-6-7)", AlarmDialog::GameColorMemory);
-    gameCombo->addItem("Ultrasonic (Hand Wave)", AlarmDialog::GameUltrasonic);
+    gameCombo->addItem("Number Order", AlarmDialog::GameNumberOrder);
+    gameCombo->addItem("Color Memory", AlarmDialog::GameColorMemory);
+    gameCombo->addItem("Ultrasonic",   AlarmDialog::GameUltrasonic);
     gameCombo->setFixedHeight(38);
     root->addWidget(gameCombo);
 

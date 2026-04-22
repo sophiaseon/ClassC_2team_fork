@@ -90,7 +90,7 @@ AlarmDialog::AlarmDialog(QWidget *parent,
                          bool initialUseSpecificDate)
     : QDialog(parent)
     , m_editIndex(editIndex)
-    , m_soundResult(initialSound.isEmpty() ? QDir::homePath() + "/test_contents/test.wav" : initialSound)
+    , m_soundResult(initialSound.isEmpty() ? QDir::homePath() + "/test_contents/good_morning.wav" : initialSound)
     , m_dismissMode(initialDismissMode)
     , m_gameType(initialGameType)
     , m_repeatMask(initialRepeatMask)
@@ -300,9 +300,9 @@ void AlarmDialog::buildUi()
     QLabel *soundLabel = new QLabel("Alarm Sound", this);
     soundLabel->setStyleSheet("QLabel { font-size: 14px; font-weight: 600; color: #aaaaaa; }");
     m_soundCombo = makeCombo();
-    m_soundCombo->addItem("test.wav",        QDir::homePath() + "/test_contents/test.wav");
-    m_soundCombo->addItem("test2.wav",       QDir::homePath() + "/test_contents/test2.wav");
-    m_soundCombo->addItem("Tetris (Buzzer)", "buzzer:tetris");
+    m_soundCombo->addItem("Good Morning", QDir::homePath() + "/test_contents/good_morning.wav");
+    m_soundCombo->addItem("Trumpet",      QDir::homePath() + "/test_contents/napal.wav");
+    m_soundCombo->addItem("Tetris",       QDir::homePath() + "/test_contents/Tetris.wav");
     soundLayout->addWidget(soundLabel);
     soundLayout->addWidget(m_soundCombo);
 
@@ -326,9 +326,9 @@ void AlarmDialog::buildUi()
     }
 
     m_gameCombo = makeCombo(40);
-    m_gameCombo->addItem("Number Order (1-25)", GameNumberOrder);
-    m_gameCombo->addItem("Color Memory (5-6-7)", GameColorMemory);
-    m_gameCombo->addItem("Ultrasonic (Hand Wave)", GameUltrasonic);
+    m_gameCombo->addItem("Number Order", GameNumberOrder);
+    m_gameCombo->addItem("Color Memory", GameColorMemory);
+    m_gameCombo->addItem("Ultrasonic",   GameUltrasonic);
 
     m_gameOptionStack = new QStackedWidget(this);
     m_gameOptionStack->setFixedHeight(52);
