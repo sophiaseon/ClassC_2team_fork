@@ -10,6 +10,12 @@
 #include <string.h>
 #include <sys/select.h>
 
+// LED ioctl via devtest.ko — values must match device_driver/button/my_ioctl.h
+#define LED_IOCTL_MAGIC   'k'
+#define LED_IOCTL_ON      _IO(LED_IOCTL_MAGIC, 4)
+#define LED_IOCTL_OFF     _IO(LED_IOCTL_MAGIC, 5)
+#define LED_DEV           "/dev/mydev"
+
 // ── Ethernet link control ─────────────────────────────────────────────────────
 // USB camera and Ethernet share the same USB bus on the Raspberry Pi.
 // Bringing the Ethernet link down while the camera is active frees up
@@ -35,6 +41,7 @@ AlarmCameraThread::AlarmCameraThread(QObject *parent)
     , m_running(false)
     , m_lastEmitMs(0)
     , m_i2cFd(-1)
+    , m_ledFd(-1)
     , m_luxThreshold(50.0f)
 {
     m_videodev.fd = -1;
@@ -330,6 +337,19 @@ int AlarmCameraThread::captureFrame()
     }
     const bool captureNeeded = !savePath.isEmpty();
 
+    // ── Periodic lux-based LED control ─────────────────────────────────────────────
+    // Read lux every ~15 frames (≈0.5 s at 30 fps) and update LED.
+    // lux >= threshold → LED ON (bright);  lux < threshold → LED OFF (dark).
+    if (m_ledFd >= 0 && m_i2cFd >= 0) {
+        static int s_luxCounter = 0;
+        if (++s_luxCounter >= 15) {
+            s_luxCounter = 0;
+            const float lux = readLux();
+            if (lux >= 0.0f)
+                ::ioctl(m_ledFd, lux >= threshold ? LED_IOCTL_ON : LED_IOCTL_OFF);
+        }
+    }
+
     const bool uiReady = m_uiReady.testAndSetAcquire(1, 0);
 
     if (uiReady || captureNeeded) {
@@ -415,6 +435,13 @@ bool AlarmCameraThread::initBH1750()
         qWarning() << "[Camera] open(/dev/bh1750) failed:" << strerror(errno);
         return false;
     }
+
+    // Open LED device for ioctl-based LED control
+    m_ledFd = open(LED_DEV, O_RDWR | O_CLOEXEC);
+    if (m_ledFd < 0)
+        qWarning() << "[Camera] open(" LED_DEV ") failed — LED control unavailable:"
+                   << strerror(errno);
+
     qDebug() << "[Camera] BH1750 initialized (threshold:" << m_luxThreshold << "lux)";
     return true;
 }
@@ -433,6 +460,11 @@ float AlarmCameraThread::readLux()
 
 void AlarmCameraThread::closeBH1750()
 {
+    if (m_ledFd >= 0) {
+        ::ioctl(m_ledFd, LED_IOCTL_OFF);  // ensure LED is off when camera exits
+        close(m_ledFd);
+        m_ledFd = -1;
+    }
     if (m_i2cFd >= 0) {
         close(m_i2cFd);
         m_i2cFd = -1;

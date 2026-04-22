@@ -71,6 +71,7 @@ private:
     qint64 m_lastEmitMs;
 
     int   m_i2cFd;
+    int   m_ledFd;
     float m_luxThreshold;
 };
 

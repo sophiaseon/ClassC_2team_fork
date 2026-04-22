@@ -650,9 +650,9 @@ void DismissDialog::buildCameraUi(const QStringList &alarmTimes)
                 m_captureRequested = false;
                 if (m_cameraStatusLabel)
                     m_cameraStatusLabel->setText(
-                        QString("Too dark to capture (%.1f lux, need %.0f). Press button again when brighter.")
-                            .arg(static_cast<double>(lux))
-                            .arg(static_cast<double>(threshold)));
+                        QString("Too dark to capture (%1 lux, need %2). Press button again when brighter.")
+                            .arg(static_cast<double>(lux),     0, 'f', 1)
+                            .arg(static_cast<double>(threshold), 0, 'f', 0));
             });
     connect(m_cameraThread, &AlarmCameraThread::statusUpdate, this,
             [this](const QString &msg) {
