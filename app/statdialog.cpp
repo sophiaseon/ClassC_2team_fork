@@ -2,18 +2,170 @@
 
 #include <QEventLoop>
 #include <QFile>
+#include <QFont>
+#include <QDate>
+#include <QGridLayout>
 #include <QHBoxLayout>
 #include <QImage>
 #include <QImageReader>
 #include <QLabel>
 #include <QListWidget>
 #include <QListWidgetItem>
+#include <QMap>
+#include <QPainter>
+#include <QPen>
 #include <QPixmap>
 #include <QPushButton>
+#include <QStackedWidget>
 #include <QTcpSocket>
 #include <QTextStream>
 #include <QTimer>
 #include <QVBoxLayout>
+#include <QWidget>
+
+// ── CalendarWidget ────────────────────────────────────────────────────────────
+// Calendar view: each day is colour-coded by how quickly the alarm was dismissed.
+//   value 1 = green  (≤ 30 s)    value 2 = orange (≤ 2 min)    value 3 = red (> 2 min)
+class CalendarWidget : public QWidget
+{
+public:
+    explicit CalendarWidget(QWidget *parent = nullptr) : QWidget(parent)
+    {
+        m_month = QDate(QDate::currentDate().year(), QDate::currentDate().month(), 1);
+
+        QVBoxLayout *root = new QVBoxLayout(this);
+        root->setContentsMargins(16, 10, 16, 10);
+        root->setSpacing(8);
+
+        // ── Navigation row ────────────────────────────────────────────────────
+        QHBoxLayout *nav = new QHBoxLayout();
+        nav->setSpacing(8);
+
+        const QString navStyle =
+            "QPushButton { font-size:16px; font-weight:700; color:#cccccc;"
+            "    background:#252525; border:none; border-radius:8px; }"
+            "QPushButton:pressed { background:#3a3a3a; }";
+
+        m_prevBtn = new QPushButton("<", this);
+        m_prevBtn->setFixedSize(36, 32);
+        m_prevBtn->setStyleSheet(navStyle);
+        m_nextBtn = new QPushButton(">", this);
+        m_nextBtn->setFixedSize(36, 32);
+        m_nextBtn->setStyleSheet(navStyle);
+
+        m_monthLabel = new QLabel(this);
+        m_monthLabel->setAlignment(Qt::AlignCenter);
+        m_monthLabel->setStyleSheet(
+            "QLabel { font-size:15px; font-weight:700; color:#ffffff; background:transparent; }");
+
+        nav->addWidget(m_prevBtn);
+        nav->addWidget(m_monthLabel, 1);
+        nav->addWidget(m_nextBtn);
+        root->addLayout(nav);
+
+        // ── Legend ────────────────────────────────────────────────────────────
+        QHBoxLayout *leg = new QHBoxLayout();
+        leg->setSpacing(16);
+        leg->addStretch();
+        const auto addLeg = [&](const QString &text, const QString &color) {
+            QLabel *l = new QLabel(text, this);
+            l->setStyleSheet(
+                QString("QLabel { font-size:11px; color:%1; background:transparent; }").arg(color));
+            leg->addWidget(l);
+        };
+        addLeg("\u25cf \u2264 30s (fast)", "#44cc44");
+        addLeg("\u25cf \u2264 2min",        "#ff9933");
+        addLeg("\u25cf > 2min (slow)",    "#ff5555");
+        leg->addStretch();
+        root->addLayout(leg);
+
+        // ── Day-of-week header ────────────────────────────────────────────────
+        m_gridLayout = new QGridLayout();
+        m_gridLayout->setSpacing(4);
+        m_gridLayout->setContentsMargins(0, 0, 0, 0);
+
+        const QStringList dow = { "Sun","Mon","Tue","Wed","Thu","Fri","Sat" };
+        for (int i = 0; i < 7; ++i) {
+            QLabel *h = new QLabel(dow[i], this);
+            h->setAlignment(Qt::AlignCenter);
+            h->setFixedHeight(24);
+            h->setStyleSheet(
+                "QLabel { font-size:11px; font-weight:700; color:#666666; background:transparent; }");
+            m_gridLayout->addWidget(h, 0, i);
+        }
+        root->addLayout(m_gridLayout, 1);
+
+        connect(m_prevBtn, &QPushButton::clicked, this, [this]() {
+            m_month = m_month.addMonths(-1);
+            rebuild();
+        });
+        connect(m_nextBtn, &QPushButton::clicked, this, [this]() {
+            m_month = m_month.addMonths(1);
+            rebuild();
+        });
+
+        rebuild();
+    }
+
+    void setData(const QMap<QDate, int> &data)
+    {
+        m_data = data;
+        if (!m_data.isEmpty()) {
+            const QDate last = m_data.lastKey();
+            m_month = QDate(last.year(), last.month(), 1);
+        }
+        rebuild();
+    }
+
+private:
+    void rebuild()
+    {
+        m_monthLabel->setText(m_month.toString("MMMM yyyy"));
+
+        // Delete old day-cell labels
+        for (QLabel *l : m_dayLabels) {
+            m_gridLayout->removeWidget(l);
+            delete l;
+        }
+        m_dayLabels.clear();
+
+        // Qt dayOfWeek(): 1=Mon..7=Sun → convert to 0=Sun..6=Sat
+        const int firstDow    = m_month.dayOfWeek() % 7;
+        const int daysInMonth = m_month.daysInMonth();
+
+        for (int day = 1; day <= daysInMonth; ++day) {
+            const int cellIdx = firstDow + day - 1;
+            const int row     = cellIdx / 7 + 1;
+            const int col     = cellIdx % 7;
+            const QDate d     = QDate(m_month.year(), m_month.month(), day);
+            const int   val   = m_data.value(d, 0);
+
+            QString bg, fg, border;
+            if      (val == 1) { bg = "#1a4a1a"; fg = "#44dd44"; border = "#2a7a2a"; }
+            else if (val == 2) { bg = "#4a3010"; fg = "#ffaa33"; border = "#7a5020"; }
+            else if (val == 3) { bg = "#4a1010"; fg = "#ff5555"; border = "#7a2020"; }
+            else               { bg = "#1e1e1e"; fg = "#505050"; border = "#2a2a2a"; }
+
+            QLabel *lbl = new QLabel(QString::number(day), this);
+            lbl->setAlignment(Qt::AlignCenter);
+            lbl->setFixedHeight(42);
+            lbl->setStyleSheet(
+                QString("QLabel { font-size:14px; font-weight:%1; color:%2;"
+                        "    background:%3; border:1px solid %4; border-radius:8px; }")
+                .arg(val > 0 ? "700" : "400").arg(fg).arg(bg).arg(border));
+            m_gridLayout->addWidget(lbl, row, col);
+            m_dayLabels.append(lbl);
+        }
+    }
+
+    QGridLayout     *m_gridLayout = nullptr;
+    QLabel          *m_monthLabel = nullptr;
+    QPushButton     *m_prevBtn    = nullptr;
+    QPushButton     *m_nextBtn    = nullptr;
+    QDate            m_month;
+    QMap<QDate, int> m_data;
+    QList<QLabel *>  m_dayLabels;
+};
 
 static const quint16 ALARM_PORT    = 45678;
 static const int     FETCH_TIMEOUT = 5000;
@@ -126,7 +278,6 @@ void StatDialog::buildUi()
     headerLayout->addWidget(h2, 5);
     headerLayout->addWidget(h3, 5);
     headerLayout->addWidget(h4);
-    root->addWidget(headerWidget);
 
     // List widget — stored as member so populateList() can refresh it
     m_listWidget = new QListWidget(this);
@@ -189,15 +340,43 @@ void StatDialog::buildUi()
         });
     }
 
+    QPushButton *graphBtn = makeBtn("Graph", "#4a3a7a", "#3a2a5a");
     QPushButton *closeBtn = makeBtn("Close", "#444444", "#333333");
     connect(closeBtn, &QPushButton::clicked, this, [this]() {
         if (m_actionTimer.elapsed() < 300) return;
         m_actionTimer.restart();
         accept();
     });
+    bottomRow->addWidget(graphBtn);
     bottomRow->addWidget(closeBtn);
 
-    root->addWidget(m_listWidget, 1);
+    // Stack page 0: header + list; page 1: line chart
+    QWidget *listPage = new QWidget(this);
+    QVBoxLayout *listPageLay = new QVBoxLayout(listPage);
+    listPageLay->setContentsMargins(0, 0, 0, 0);
+    listPageLay->setSpacing(4);
+    listPageLay->addWidget(headerWidget);
+    listPageLay->addWidget(m_listWidget, 1);
+
+    m_chartWidget = new CalendarWidget(this);
+
+    m_stack = new QStackedWidget(this);
+    m_stack->addWidget(listPage);      // index 0
+    m_stack->addWidget(m_chartWidget); // index 1
+
+    connect(graphBtn, &QPushButton::clicked, this, [this, graphBtn]() {
+        if (m_actionTimer.elapsed() < 300) return;
+        m_actionTimer.restart();
+        if (m_stack->currentIndex() == 0) {
+            m_stack->setCurrentIndex(1);
+            graphBtn->setText("List");
+        } else {
+            m_stack->setCurrentIndex(0);
+            graphBtn->setText("Graph");
+        }
+    });
+
+    root->addWidget(m_stack, 1);
     root->addWidget(m_summaryLabel);
     root->addLayout(bottomRow);
 }
@@ -209,6 +388,7 @@ void StatDialog::populateList(const QByteArray &logData)
     const bool isFriend = !m_friendIp.isEmpty();
 
     int count = 0;
+    QMap<QDate, int> calData;
     QTextStream in(logData);
     while (!in.atEnd()) {
         const QString line = in.readLine().trimmed();
@@ -223,6 +403,21 @@ void StatDialog::populateList(const QByteArray &logData)
             else if (part.startsWith("PHOTO: "))     photoPath   = part.mid(7).trimmed();
         }
         if (alarmTime.isEmpty()) alarmTime = line;
+
+        // Compute dismiss speed and colour-code for calendar
+        if (!alarmTime.isEmpty() && !dismissTime.isEmpty()) {
+            const QDateTime alarmDt   = QDateTime::fromString(alarmTime,   "yyyy-MM-dd hh:mm");
+            const QDateTime dismissDt = QDateTime::fromString(dismissTime, "yyyy-MM-dd hh:mm:ss");
+            if (alarmDt.isValid() && dismissDt.isValid()) {
+                const int secs = static_cast<int>(alarmDt.secsTo(dismissDt));
+                int colorVal;
+                if      (secs <= 30)  colorVal = 1;
+                else if (secs <= 120) colorVal = 2;
+                else                  colorVal = 3;
+                const QDate date = dismissDt.date();
+                calData[date] = qMax(calData.value(date, 0), colorVal);
+            }
+        }
 
         // View button visible:
         //   local  – photo path recorded AND file exists on this disk
@@ -352,4 +547,7 @@ void StatDialog::populateList(const QByteArray &logData)
         count > 0 ? QString("Total %1 record(s)").arg(count)
                   : "Log file is empty or not found."
     );
+
+    // Feed calendar colour data
+    m_chartWidget->setData(calData);
 }

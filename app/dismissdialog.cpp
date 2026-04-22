@@ -745,9 +745,9 @@ void DismissDialog::onButtonGameFailure()
 
 void DismissDialog::buildUltrasonicUi(const QStringList &alarmTimes)
 {
-    setFixedSize(560, 500);
+    setFixedSize(760, 420);
 
-    // ── Generate random 4-step sequence (values 0-3, repetitions allowed) ──
+    // ── Generate random 4-step sequence (all 4 sensors, each once) ──────────
     QList<int> pool = { 0, 1, 2, 3 };
     for (int i = pool.size() - 1; i > 0; --i) {
         int j = static_cast<int>(QRandomGenerator::global()->bounded(static_cast<quint32>(i + 1)));
@@ -760,96 +760,116 @@ void DismissDialog::buildUltrasonicUi(const QStringList &alarmTimes)
     m_usNeedRelease = false;
     m_usHolding     = false;
 
-    // ── Layout ──────────────────────────────────────────────────────────────
+    // ── Root layout ──────────────────────────────────────────────────────────
     QVBoxLayout *root = new QVBoxLayout(this);
     root->setContentsMargins(20, 14, 20, 14);
-    root->setSpacing(6);
+    root->setSpacing(8);
 
     QLabel *titleLabel = new QLabel("Alarm is ringing!", this);
     titleLabel->setAlignment(Qt::AlignCenter);
-    titleLabel->setStyleSheet("QLabel { font-size: 20px; font-weight: 700; color: #ff6666; }");
+    titleLabel->setStyleSheet(
+        "QLabel { font-size: 20px; font-weight: 700; color: #ff6666; }");
     root->addWidget(titleLabel);
 
     QLabel *timesLabel = new QLabel(alarmTimes.join("  /  "), this);
     timesLabel->setAlignment(Qt::AlignCenter);
-    timesLabel->setStyleSheet("QLabel { font-size: 13px; color: #aaaaaa; }");
+    timesLabel->setStyleSheet(
+        "QLabel { font-size: 13px; color: #aaaaaa; }");
     root->addWidget(timesLabel);
 
     QLabel *instrLabel = new QLabel(
-        "Hold hand near the sensor shown (0.5 s). Same sensor twice = remove hand first.", this);
+        "Hold your hand near the highlighted sensor for 0.5 s each step.", this);
     instrLabel->setAlignment(Qt::AlignCenter);
     instrLabel->setWordWrap(true);
-    instrLabel->setStyleSheet("QLabel { font-size: 12px; color: #888888; }");
+    instrLabel->setStyleSheet(
+        "QLabel { font-size: 12px; color: #888888; }");
     root->addWidget(instrLabel);
 
-    // ── Sequence boxes ───────────────────────────────────────────────────────
+    // ── Main body: left (sensor map) + right (info) ──────────────────────────
+    QHBoxLayout *body = new QHBoxLayout();
+    body->setSpacing(24);
+
+    // ── LEFT: 2x2 sensor position boxes ──────────────────────────────────────
+    // Box indices match physical sensor positions:
+    //   0=top-left (S1), 1=top-right (S2), 2=bottom-left (S3), 3=bottom-right (S4)
+    QWidget *mapPanel = new QWidget(this);
+    QVBoxLayout *mapLay = new QVBoxLayout(mapPanel);
+    mapLay->setContentsMargins(0, 0, 0, 0);
+    mapLay->setSpacing(10);
+
+    QLabel *mapTitle = new QLabel("Sensor Map", this);
+    mapTitle->setAlignment(Qt::AlignCenter);
+    mapTitle->setStyleSheet(
+        "QLabel { font-size: 13px; font-weight: 700; color: #888888; }");
+    mapLay->addWidget(mapTitle);
+
+    QGridLayout *sensorGrid = new QGridLayout();
+    sensorGrid->setSpacing(10);
+    for (int i = 0; i < 4; ++i) {
+        QLabel *box = new QLabel(QString::number(i + 1), this);
+        box->setAlignment(Qt::AlignCenter);
+        box->setFixedSize(120, 120);
+        box->setStyleSheet(
+            "QLabel { font-size: 52px; font-weight: 900; color: #444444;"
+            "    background: #1a1a1a; border: 2px solid #2a2a2a; border-radius: 16px; }");
+        m_usDistLabels[i] = box;
+        sensorGrid->addWidget(box, i / 2, i % 2);
+    }
+    mapLay->addLayout(sensorGrid);
+    body->addWidget(mapPanel);
+
+    // ── RIGHT: sequence boxes + big target + progress + status ───────────────
+    QWidget *infoPanel = new QWidget(this);
+    QVBoxLayout *infoLay = new QVBoxLayout(infoPanel);
+    infoLay->setContentsMargins(0, 0, 0, 0);
+    infoLay->setSpacing(10);
+
+    QLabel *seqTitle = new QLabel("Order", this);
+    seqTitle->setAlignment(Qt::AlignCenter);
+    seqTitle->setStyleSheet(
+        "QLabel { font-size: 13px; font-weight: 700; color: #888888; }");
+    infoLay->addWidget(seqTitle);
+
     QHBoxLayout *seqRow = new QHBoxLayout();
-    seqRow->setSpacing(10);
-    seqRow->addStretch();
+    seqRow->setSpacing(8);
     for (int i = 0; i < 4; ++i) {
         QLabel *lbl = new QLabel(QString::number(m_usSeq[i] + 1), this);
         lbl->setAlignment(Qt::AlignCenter);
-        lbl->setFixedSize(60, 48);
+        lbl->setFixedSize(54, 48);
         lbl->setStyleSheet(
             "QLabel { font-size: 22px; font-weight: 800; color: #cccccc;"
-            "  background: #2c2c2c; border: 1px solid #555; border-radius: 10px; }");
+            "    background: #2c2c2c; border: 1px solid #555555; border-radius: 10px; }");
         m_usStepLabels[i] = lbl;
         seqRow->addWidget(lbl);
     }
-    seqRow->addStretch();
-    root->addLayout(seqRow);
+    infoLay->addLayout(seqRow);
 
-    // ── Big sensor number ────────────────────────────────────────────────────
     m_usTargetLabel = new QLabel(QString::number(m_usSeq[0] + 1), this);
     m_usTargetLabel->setAlignment(Qt::AlignCenter);
-    m_usTargetLabel->setFixedHeight(110);
+    m_usTargetLabel->setFixedHeight(100);
     m_usTargetLabel->setStyleSheet(
-        "QLabel { font-size: 80px; font-weight: 900; color: #2d7dff; }");
-    root->addWidget(m_usTargetLabel);
+        "QLabel { font-size: 82px; font-weight: 900; color: #2d7dff; }");
+    infoLay->addWidget(m_usTargetLabel);
 
-    // ── Progress label ───────────────────────────────────────────────────────
     m_usProgressLabel = new QLabel("Step 1 / 4", this);
     m_usProgressLabel->setAlignment(Qt::AlignCenter);
     m_usProgressLabel->setStyleSheet(
         "QLabel { font-size: 16px; font-weight: 700; color: #cccccc; }");
-    root->addWidget(m_usProgressLabel);
+    infoLay->addWidget(m_usProgressLabel);
 
-    // ── Status/instruction label ─────────────────────────────────────────────
     m_usStatusLabel = new QLabel(
         QString("Bring hand near Sensor %1").arg(m_usSeq[0] + 1), this);
     m_usStatusLabel->setAlignment(Qt::AlignCenter);
     m_usStatusLabel->setWordWrap(true);
-    m_usStatusLabel->setFixedHeight(44);
+    m_usStatusLabel->setFixedHeight(48);
     m_usStatusLabel->setStyleSheet(
-        "QLabel { font-size: 15px; font-weight: 600; color: #2d7dff; }");
-    root->addWidget(m_usStatusLabel);
+        "QLabel { font-size: 14px; font-weight: 600; color: #2d7dff; }");
+    infoLay->addWidget(m_usStatusLabel);
 
-    // ── Corner layout diagram ────────────────────────────────────────────────
-    QLabel *diagramLabel = new QLabel(
-        "[1] ─── [2]\n │         │\n[3] ─── [4]", this);
-    diagramLabel->setAlignment(Qt::AlignCenter);
-    diagramLabel->setStyleSheet(
-        "QLabel { font-size: 13px; font-family: monospace; color: #666666; }");
-    root->addWidget(diagramLabel);
+    body->addWidget(infoPanel, 1);
+    root->addLayout(body, 1);
 
-    // ── Live distance readouts ───────────────────────────────────────────────
-    QHBoxLayout *distRow = new QHBoxLayout();
-    distRow->setSpacing(8);
-    distRow->addStretch();
-    for (int i = 0; i < 4; ++i) {
-        QLabel *lbl = new QLabel(QString("S%1:--").arg(i + 1), this);
-        lbl->setAlignment(Qt::AlignCenter);
-        lbl->setFixedSize(78, 28);
-        lbl->setStyleSheet(
-            "QLabel { font-size: 12px; color: #888888;"
-            "  background: #1e1e1e; border: 1px solid #444; border-radius: 6px; }");
-        m_usDistLabels[i] = lbl;
-        distRow->addWidget(lbl);
-    }
-    distRow->addStretch();
-    root->addLayout(distRow);
-
-    // Highlight step 0 immediately
+    // Highlight step 0
     usAdvanceToStep(0);
 
     // ── Start the watcher ────────────────────────────────────────────────────
@@ -858,27 +878,40 @@ void DismissDialog::buildUltrasonicUi(const QStringList &alarmTimes)
             this, &DismissDialog::onUltrasonicDistances);
 }
 
-// Helper: update step-box highlighting and target/progress labels
+// Helper: update step-box highlighting and sensor map colours
 void DismissDialog::usAdvanceToStep(int step)
 {
-    const QString activeStyle =
+    // ── Step sequence boxes ───────────────────────────────────────────────────
+    const QString seqActive =
         "QLabel { font-size: 22px; font-weight: 800; color: #111111;"
-        "  background: #2d7dff; border: 1px solid #3a8cff; border-radius: 10px; }";
-    const QString doneStyle =
+        "    background: #2d7dff; border: 1px solid #3a8cff; border-radius: 10px; }";
+    const QString seqDone =
         "QLabel { font-size: 22px; font-weight: 800; color: #111111;"
-        "  background: #46a446; border: 1px solid #55b755; border-radius: 10px; }";
-    const QString pendingStyle =
+        "    background: #46a446; border: 1px solid #55b755; border-radius: 10px; }";
+    const QString seqPending =
         "QLabel { font-size: 22px; font-weight: 800; color: #cccccc;"
-        "  background: #2c2c2c; border: 1px solid #555; border-radius: 10px; }";
+        "    background: #2c2c2c; border: 1px solid #555555; border-radius: 10px; }";
 
     for (int i = 0; i < 4; ++i) {
         if (!m_usStepLabels[i]) continue;
-        if (i < step)
-            m_usStepLabels[i]->setStyleSheet(doneStyle);
-        else if (i == step)
-            m_usStepLabels[i]->setStyleSheet(activeStyle);
-        else
-            m_usStepLabels[i]->setStyleSheet(pendingStyle);
+        if      (i < step)  m_usStepLabels[i]->setStyleSheet(seqDone);
+        else if (i == step) m_usStepLabels[i]->setStyleSheet(seqActive);
+        else                m_usStepLabels[i]->setStyleSheet(seqPending);
+    }
+
+    // ── Sensor map boxes: highlight the target sensor, dim all others ─────────
+    const int targetSensor = m_usSeq[step];  // 0-based sensor index
+
+    const QString mapTarget =
+        "QLabel { font-size: 52px; font-weight: 900; color: #111111;"
+        "    background: #2d7dff; border: 3px solid #5a9aff; border-radius: 16px; }";
+    const QString mapOther =
+        "QLabel { font-size: 52px; font-weight: 900; color: #444444;"
+        "    background: #1a1a1a; border: 2px solid #2a2a2a; border-radius: 16px; }";
+
+    for (int i = 0; i < 4; ++i) {
+        if (!m_usDistLabels[i]) continue;
+        m_usDistLabels[i]->setStyleSheet(i == targetSensor ? mapTarget : mapOther);
     }
 
     if (m_usTargetLabel)
@@ -896,25 +929,24 @@ void DismissDialog::onUltrasonicDistances(QVector<int> distances)
 
     if (m_usStep >= 4) return;
 
-    // ── Update live distance labels ──────────────────────────────────────────
-    for (int i = 0; i < 4; ++i) {
-        if (!m_usDistLabels[i]) continue;
-        const int d = (i < distances.size()) ? distances[i] : -1;
-        m_usDistLabels[i]->setText(
-            d < 0 ? QString("S%1:ERR").arg(i + 1)
-                  : QString("S%1:%2cm").arg(i + 1).arg(d));
-        m_usDistLabels[i]->setStyleSheet(
-            (d > 0 && d < NEAR_CM)
-                ? "QLabel { font-size:12px; color:#111; background:#2d7dff;"
-                  "  border:1px solid #3a8cff; border-radius:6px; }"
-                : "QLabel { font-size:12px; color:#888888; background:#1e1e1e;"
-                  "  border:1px solid #444; border-radius:6px; }");
-    }
-
     const int sensorIdx = m_usSeq[m_usStep];
     const int dist      = (sensorIdx < distances.size()) ? distances[sensorIdx] : -1;
     const bool isNear   = (dist > 0 && dist < NEAR_CM);
     const bool isFar    = (dist < 0 || dist >= FAR_CM);
+
+    // ── Update sensor map box colour for the active target ───────────────────
+    // Near + holding → green (recognition in progress); else → blue (target)
+    if (m_usDistLabels[sensorIdx]) {
+        if (isNear) {
+            m_usDistLabels[sensorIdx]->setStyleSheet(
+                "QLabel { font-size: 52px; font-weight: 900; color: #111111;"
+                "    background: #2a9a2a; border: 3px solid #44cc44; border-radius: 16px; }");
+        } else {
+            m_usDistLabels[sensorIdx]->setStyleSheet(
+                "QLabel { font-size: 52px; font-weight: 900; color: #111111;"
+                "    background: #2d7dff; border: 3px solid #5a9aff; border-radius: 16px; }");
+        }
+    }
 
     // ── Wait-for-release phase (same sensor repeated) ────────────────────────
     if (m_usNeedRelease) {
@@ -948,10 +980,17 @@ void DismissDialog::onUltrasonicDistances(QVector<int> distances)
             const qint64 elapsed = m_usHoldTimer.elapsed();
             if (elapsed >= HOLD_MS) {
                 // ── Step recognised! ────────────────────────────────────────
+                // Mark step sequence box as done
                 if (m_usStepLabels[m_usStep]) {
                     m_usStepLabels[m_usStep]->setStyleSheet(
-                        "QLabel { font-size:22px; font-weight:800; color:#111;"
-                        "  background:#46a446; border:1px solid #55b755; border-radius:10px; }");
+                        "QLabel { font-size: 22px; font-weight: 800; color: #111111;"
+                        "    background: #46a446; border: 1px solid #55b755; border-radius: 10px; }");
+                }
+                // Mark sensor map box as confirmed (bright green, locked)
+                if (m_usDistLabels[sensorIdx]) {
+                    m_usDistLabels[sensorIdx]->setStyleSheet(
+                        "QLabel { font-size: 52px; font-weight: 900; color: #111111;"
+                        "    background: #46a446; border: 3px solid #66cc66; border-radius: 16px; }");
                 }
 
                 ++m_usStep;

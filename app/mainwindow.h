@@ -4,9 +4,6 @@
 #include <QDateTime>
 #include <QDir>
 #include <QElapsedTimer>
-#include <QFuture>
-#include <atomic>
-#include <pthread.h>
 #include <QList>
 #include <QMainWindow>
 
@@ -56,8 +53,6 @@ private:
     void buildUi();
     void sortAlarmsByTime();
     void refreshAlarmList();
-    void startBuzzerTetris();
-    void stopBuzzer();
     void loadAlarmCounter();
     void saveAlarmCounter();
     void saveAlarms();
@@ -88,9 +83,6 @@ private:
     QTcpServer       *m_alarmServer;
 
     int              m_nextAlarmId = 1;
-    int              m_buzzerFd = -1;
-    QFuture<void>    m_buzzerFuture;
-    std::atomic<pthread_t> m_buzzerTid{0};  // thread running the ioctl
     bool             m_alarmHandling = false;  // re-entrancy guard
 
     QElapsedTimer m_actionTimer;

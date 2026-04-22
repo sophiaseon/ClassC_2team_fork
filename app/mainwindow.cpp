@@ -5,18 +5,7 @@
 #include "statdialog.h"
 
 #include <algorithm>
-#include <fcntl.h>
-#include <signal.h>
-#include <unistd.h>
-#include <sys/ioctl.h>
-#include <pthread.h>
-#include <QtConcurrent>
 
-// Buzzer ioctl constants (matches my_ioctl.h)
-#define MY_IOCTL_MAGIC    'M'
-#define IOCTL_PLAY_TETRIS _IO(MY_IOCTL_MAGIC, 0)
-#define IOCTL_STOP        _IO(MY_IOCTL_MAGIC, 3)
-#define BUZZER_DEVICE     "/dev/mybuzzer"
 #include <QComboBox>
 #include <QDir>
 #include <QHostAddress>
@@ -113,10 +102,6 @@ MainWindow::MainWindow(QWidget *parent)
     , m_buttonWatcher(new ButtonWatcher(this))
     , m_alarmServer(nullptr)
 {
-    // Open buzzer device lazily on first use (insmod may not have happened yet)
-    // Install SIGUSR1 handler: empty (prevents process termination) but wakes
-    // msleep_interruptible in the kernel so the buzzer thread exits quickly.
-    ::signal(SIGUSR1, [](int){});
     buildUi();
 
     m_actionTimer.start();
@@ -141,47 +126,6 @@ MainWindow::MainWindow(QWidget *parent)
 
 MainWindow::~MainWindow()
 {
-    if (m_buzzerFd >= 0) {
-        ::ioctl(m_buzzerFd, IOCTL_STOP);
-    }
-    const pthread_t tid = m_buzzerTid.load();
-    if (tid != 0) ::pthread_kill(tid, SIGUSR1);
-    m_buzzerFuture.waitForFinished();  // safe to block here in destructor
-    if (m_buzzerFd >= 0) {
-        ::close(m_buzzerFd);
-        m_buzzerFd = -1;
-    }
-}
-
-void MainWindow::startBuzzerTetris()
-{
-    // Lazy open: try to open device if not already open
-    if (m_buzzerFd < 0)
-        m_buzzerFd = ::open(BUZZER_DEVICE, O_RDWR);
-    if (m_buzzerFd < 0) return;   // device still not available
-
-    if (m_buzzerFuture.isRunning()) return;  // already playing
-
-    const int fd = m_buzzerFd;
-    m_buzzerFuture = QtConcurrent::run([this, fd]() {
-        m_buzzerTid.store(::pthread_self());
-        ::ioctl(fd, IOCTL_PLAY_TETRIS);
-        m_buzzerTid.store(pthread_t{});
-    });
-}
-
-void MainWindow::stopBuzzer()
-{
-    if (m_buzzerFd >= 0) {
-        // 1. Set g_stop=1 in kernel AND silence PWM immediately
-        ::ioctl(m_buzzerFd, IOCTL_STOP);
-    }
-    // 2. Wake up the thread blocked in msleep_interruptible so it exits fast
-    const pthread_t tid = m_buzzerTid.load();
-    if (tid != 0) {
-        ::pthread_kill(tid, SIGUSR1);
-    }
-    // Do NOT waitForFinished() here — main thread must stay responsive
 }
 
 // ── buildUi ──────────────────────────────────────────────────────────────────
@@ -491,21 +435,14 @@ void MainWindow::updateCurrentTime()
 
     // Play sound — loop until dialog is dismissed via polling timer
     const QString &soundFile = triggered.first().soundFile;
-    QTimer *loopTimer = nullptr;
-    if (soundFile == "buzzer:tetris") {
-        startBuzzerTetris();
-    } else {
-        // Poll every 200ms: if aplay finished and alarm still active, restart it.
-        // More reliable than QProcess::finished signal across Qt versions.
-        loopTimer = new QTimer(this);
-        loopTimer->setInterval(200);
-        connect(loopTimer, &QTimer::timeout, this, [this, soundFile]() {
-            if (m_alarmPlayer->state() == QProcess::NotRunning)
-                m_alarmPlayer->start("aplay", QStringList() << "-D" << "hw:3,0" << soundFile);
-        });
-        m_alarmPlayer->start("aplay", QStringList() << "-D" << "hw:3,0" << soundFile);
-        loopTimer->start();
-    }
+    QTimer *loopTimer = new QTimer(this);
+    loopTimer->setInterval(200);
+    connect(loopTimer, &QTimer::timeout, this, [this, soundFile]() {
+        if (m_alarmPlayer->state() == QProcess::NotRunning)
+            m_alarmPlayer->start("aplay", QStringList() << "-D" << "hw:3,0" << soundFile);
+    });
+    m_alarmPlayer->start("aplay", QStringList() << "-D" << "hw:3,0" << soundFile);
+    loopTimer->start();
 
     // Collect alarm times and determine mode priority: Camera > Button > Ultrasonic > Game > Simple
     QStringList alarmTimes;
@@ -616,13 +553,12 @@ void MainWindow::updateCurrentTime()
     saveAlarms();
     refreshAlarmList();
 
-    // Stop player / buzzer
+    // Stop player
     m_alarmPlayer->terminate();
     m_alarmPlayer->waitForFinished(500);
     if (m_alarmPlayer->state() != QProcess::NotRunning) {
         m_alarmPlayer->kill();
     }
-    stopBuzzer();
     m_alarmHandling = false;
 }
 
@@ -795,8 +731,9 @@ void MainWindow::setDebugAlarmPlus5Sec()
     QLabel *soundLabel = new QLabel("Alarm Sound", &dlg);
     soundLabel->setStyleSheet("QLabel { font-size: 13px; color: #aaaaaa; }");
     QComboBox *soundCombo = new QComboBox(&dlg);
-    soundCombo->addItem("test.wav",  QDir::homePath() + "/test_contents/test.wav");
-    soundCombo->addItem("test2.wav", QDir::homePath() + "/test_contents/test2.wav");
+    soundCombo->addItem("Good Morning", QDir::homePath() + "/test_contents/good_morning.wav");
+    soundCombo->addItem("Trumpet",      QDir::homePath() + "/test_contents/napal.wav");
+    soundCombo->addItem("Tetris",       QDir::homePath() + "/test_contents/Tetris.wav");
     soundCombo->setFixedHeight(40);
     root->addWidget(soundLabel);
     root->addWidget(soundCombo);
@@ -1328,7 +1265,7 @@ void MainWindow::loadAlarms()
         e.alarmId         = obj["alarmId"].toInt();
         e.dateTime        = QDateTime::fromString(obj["dateTime"].toString(), Qt::ISODate);
         e.enabled         = obj["enabled"].toBool(true);
-        e.soundFile       = obj["soundFile"].toString(QDir::homePath() + "/test_contents/test.wav");
+        e.soundFile       = obj["soundFile"].toString(QDir::homePath() + "/test_contents/good_morning.wav");
         e.dismissMode     = obj["dismissMode"].toInt(0);
         e.gameType        = obj["gameType"].toInt(0);
         e.repeatMask      = obj["repeatMask"].toInt(0);
