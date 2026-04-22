@@ -11,6 +11,7 @@
 class CalendarWidget;
 class QLabel;
 class QListWidget;
+class QPushButton;
 class QStackedWidget;
 
 class StatDialog : public QDialog
@@ -27,15 +28,18 @@ public:
 
 private:
     void       buildUi();
-    void       populateList(const QByteArray &logData);
+    void       populateList(const QByteArray &logData, QDate filterDate = QDate());
     QByteArray fetchFromFriend(const QString &command) const;
 
     QString          m_title;
     QString          m_friendIp;                // empty = local mode
+    QByteArray       m_logData;
     QListWidget     *m_listWidget    = nullptr;
     QLabel          *m_summaryLabel  = nullptr;
+    QLabel          *m_listDateLabel = nullptr;
     QStackedWidget  *m_stack         = nullptr;
     CalendarWidget  *m_chartWidget   = nullptr;
+    QPushButton     *m_graphBtn      = nullptr;
     QElapsedTimer    m_actionTimer;
 };
 

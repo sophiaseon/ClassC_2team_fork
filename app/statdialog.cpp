@@ -1,5 +1,6 @@
 #include "statdialog.h"
 
+#include <functional>
 #include <QEventLoop>
 #include <QFile>
 #include <QFont>
@@ -117,13 +118,15 @@ public:
         rebuild();
     }
 
+    std::function<void(QDate)> onDayClicked;
+
 private:
     void rebuild()
     {
         m_monthLabel->setText(m_month.toString("MMMM yyyy"));
 
-        // Delete old day-cell labels
-        for (QLabel *l : m_dayLabels) {
+        // Delete old day-cell buttons
+        for (QPushButton *l : m_dayLabels) {
             m_gridLayout->removeWidget(l);
             delete l;
         }
@@ -146,15 +149,25 @@ private:
             else if (val == 3) { bg = "#4a1010"; fg = "#ff5555"; border = "#7a2020"; }
             else               { bg = "#1e1e1e"; fg = "#505050"; border = "#2a2a2a"; }
 
-            QLabel *lbl = new QLabel(QString::number(day), this);
-            lbl->setAlignment(Qt::AlignCenter);
-            lbl->setFixedHeight(42);
-            lbl->setStyleSheet(
-                QString("QLabel { font-size:14px; font-weight:%1; color:%2;"
-                        "    background:%3; border:1px solid %4; border-radius:8px; }")
-                .arg(val > 0 ? "700" : "400").arg(fg).arg(bg).arg(border));
-            m_gridLayout->addWidget(lbl, row, col);
-            m_dayLabels.append(lbl);
+            QPushButton *btn = new QPushButton(QString::number(day), this);
+            btn->setFixedHeight(42);
+            btn->setFlat(true);
+            btn->setStyleSheet(
+                QString("QPushButton { font-size:14px; font-weight:%1; color:%2;"
+                        "    background:%3; border:1px solid %4; border-radius:8px; }"
+                        "QPushButton:hover { border-color:%5; }"
+                        "QPushButton:pressed { background:%6; }")
+                .arg(val > 0 ? "700" : "400").arg(fg).arg(bg).arg(border)
+                .arg(val > 0 ? "#aaaaaa" : border)
+                .arg(val > 0 ? fg : bg));
+            if (val > 0) {
+                btn->setCursor(Qt::PointingHandCursor);
+                connect(btn, &QPushButton::clicked, this, [this, d]() {
+                    if (onDayClicked) onDayClicked(d);
+                });
+            }
+            m_gridLayout->addWidget(btn, row, col);
+            m_dayLabels.append(btn);
         }
     }
 
@@ -164,7 +177,7 @@ private:
     QPushButton     *m_nextBtn    = nullptr;
     QDate            m_month;
     QMap<QDate, int> m_data;
-    QList<QLabel *>  m_dayLabels;
+    QList<QPushButton *> m_dayLabels;
 };
 
 static const quint16 ALARM_PORT    = 45678;
@@ -335,44 +348,63 @@ void StatDialog::buildUi()
             refreshBtn->setText("Loading...");
             const QByteArray data = fetchFromFriend("GET_LOG");
             populateList(data);
+            m_stack->setCurrentIndex(1);
+            m_graphBtn->setText("List");
             refreshBtn->setText("Refresh");
             refreshBtn->setEnabled(true);
         });
     }
 
-    QPushButton *graphBtn = makeBtn("Graph", "#4a3a7a", "#3a2a5a");
+    m_graphBtn = makeBtn("List", "#4a3a7a", "#3a2a5a");
     QPushButton *closeBtn = makeBtn("Close", "#444444", "#333333");
     connect(closeBtn, &QPushButton::clicked, this, [this]() {
         if (m_actionTimer.elapsed() < 300) return;
         m_actionTimer.restart();
         accept();
     });
-    bottomRow->addWidget(graphBtn);
+    bottomRow->addWidget(m_graphBtn);
     bottomRow->addWidget(closeBtn);
 
-    // Stack page 0: header + list; page 1: line chart
+    // Stack page 0: header + list; page 1: calendar
+    m_listDateLabel = new QLabel("All Records", this);
+    m_listDateLabel->setAlignment(Qt::AlignCenter);
+    m_listDateLabel->setStyleSheet(
+        "QLabel { font-size: 13px; color: #aaaaaa; background: transparent; }");
+
     QWidget *listPage = new QWidget(this);
     QVBoxLayout *listPageLay = new QVBoxLayout(listPage);
     listPageLay->setContentsMargins(0, 0, 0, 0);
     listPageLay->setSpacing(4);
+    listPageLay->addWidget(m_listDateLabel);
     listPageLay->addWidget(headerWidget);
     listPageLay->addWidget(m_listWidget, 1);
 
     m_chartWidget = new CalendarWidget(this);
+    m_chartWidget->onDayClicked = [this](QDate d) {
+        if (m_actionTimer.elapsed() < 300) return;
+        m_actionTimer.restart();
+        populateList(m_logData, d);
+        m_stack->setCurrentIndex(0);
+        m_graphBtn->setText("Calendar");
+    };
 
     m_stack = new QStackedWidget(this);
     m_stack->addWidget(listPage);      // index 0
     m_stack->addWidget(m_chartWidget); // index 1
+    m_stack->setCurrentIndex(1);       // start on calendar
 
-    connect(graphBtn, &QPushButton::clicked, this, [this, graphBtn]() {
+    connect(m_graphBtn, &QPushButton::clicked, this, [this]() {
         if (m_actionTimer.elapsed() < 300) return;
         m_actionTimer.restart();
-        if (m_stack->currentIndex() == 0) {
-            m_stack->setCurrentIndex(1);
-            graphBtn->setText("List");
-        } else {
+        if (m_stack->currentIndex() == 1) {
+            // Calendar → show all records list
+            populateList(m_logData);
             m_stack->setCurrentIndex(0);
-            graphBtn->setText("Graph");
+            m_graphBtn->setText("Calendar");
+        } else {
+            // List → back to calendar
+            m_stack->setCurrentIndex(1);
+            m_graphBtn->setText("List");
         }
     });
 
@@ -382,8 +414,13 @@ void StatDialog::buildUi()
 }
 
 // ── Populate list from raw log bytes ─────────────────────────────────────────
-void StatDialog::populateList(const QByteArray &logData)
+void StatDialog::populateList(const QByteArray &logData, QDate filterDate)
 {
+    m_logData = logData;
+    if (m_listDateLabel)
+        m_listDateLabel->setText(filterDate.isValid()
+            ? QString("Records for %1").arg(filterDate.toString("MMMM d, yyyy"))
+            : "All Records");
     m_listWidget->clear();
     const bool isFriend = !m_friendIp.isEmpty();
 
@@ -394,7 +431,6 @@ void StatDialog::populateList(const QByteArray &logData)
         const QString line = in.readLine().trimmed();
         if (line.isEmpty()) continue;
 
-        ++count;
         QString alarmTime, dismissTime, photoPath;
         const QStringList parts = line.split(" | ", Qt::SkipEmptyParts);
         for (const QString &part : parts) {
@@ -404,19 +440,30 @@ void StatDialog::populateList(const QByteArray &logData)
         }
         if (alarmTime.isEmpty()) alarmTime = line;
 
-        // Compute dismiss speed and colour-code for calendar
+        // Parse datetimes
+        QDateTime alarmDt, dismissDt;
         if (!alarmTime.isEmpty() && !dismissTime.isEmpty()) {
-            const QDateTime alarmDt   = QDateTime::fromString(alarmTime,   "yyyy-MM-dd hh:mm");
-            const QDateTime dismissDt = QDateTime::fromString(dismissTime, "yyyy-MM-dd hh:mm:ss");
-            if (alarmDt.isValid() && dismissDt.isValid()) {
-                const int secs = static_cast<int>(alarmDt.secsTo(dismissDt));
-                int colorVal;
-                if      (secs <= 30)  colorVal = 1;
-                else if (secs <= 120) colorVal = 2;
-                else                  colorVal = 3;
-                const QDate date = dismissDt.date();
-                calData[date] = qMax(calData.value(date, 0), colorVal);
-            }
+            alarmDt   = QDateTime::fromString(alarmTime,   "yyyy-MM-dd hh:mm");
+            dismissDt = QDateTime::fromString(dismissTime, "yyyy-MM-dd hh:mm:ss");
+        }
+
+        // When filtering by date: skip records not on that day
+        if (filterDate.isValid()) {
+            if (!dismissDt.isValid() || dismissDt.date() != filterDate)
+                continue;
+        }
+
+        ++count;
+
+        // Colour-code for calendar (only when not filtering)
+        if (!filterDate.isValid() && alarmDt.isValid() && dismissDt.isValid()) {
+            const int secs = static_cast<int>(alarmDt.secsTo(dismissDt));
+            int colorVal;
+            if      (secs <= 30)  colorVal = 1;
+            else if (secs <= 120) colorVal = 2;
+            else                  colorVal = 3;
+            const QDate date = dismissDt.date();
+            calData[date] = qMax(calData.value(date, 0), colorVal);
         }
 
         // View button visible:
@@ -535,9 +582,10 @@ void StatDialog::populateList(const QByteArray &logData)
     }
 
     if (count == 0) {
-        const QString msg = isFriend
-            ? "No records found (check connection or friend has no alarms yet)."
-            : "No records found.";
+        const QString msg = filterDate.isValid()
+            ? "No records found for this date."
+            : (isFriend ? "No records found (check connection or friend has no alarms yet)."
+                        : "No records found.");
         QListWidgetItem *empty = new QListWidgetItem(msg, m_listWidget);
         empty->setForeground(QColor("#666666"));
         empty->setTextAlignment(Qt::AlignCenter);
@@ -545,9 +593,11 @@ void StatDialog::populateList(const QByteArray &logData)
 
     m_summaryLabel->setText(
         count > 0 ? QString("Total %1 record(s)").arg(count)
-                  : "Log file is empty or not found."
+                  : (filterDate.isValid() ? "No records for this date."
+                                          : "Log file is empty or not found.")
     );
 
-    // Feed calendar colour data
-    m_chartWidget->setData(calData);
+    // Update calendar only when showing all records
+    if (!filterDate.isValid())
+        m_chartWidget->setData(calData);
 }
