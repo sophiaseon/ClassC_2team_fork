@@ -1,0 +1,1 @@
+cmd_/home/user/work/practice_dd/EX04-02_std_platform_resources/modules.order := {   echo /home/user/work/practice_dd/EX04-02_std_platform_resources/devtest.ko; :; } > /home/user/work/practice_dd/EX04-02_std_platform_resources/modules.order

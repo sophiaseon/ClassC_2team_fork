@@ -1,0 +1,1 @@
+/home/user/work/practice_dd/EX03-07_std_semaphore/devtest.o

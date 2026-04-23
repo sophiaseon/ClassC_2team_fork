@@ -1,0 +1,20 @@
+mknod /dev/mydev0 c 120 0
+mknod /dev/mydev1 c 120 1
+mknod /dev/mydev2 c 120 2
+mknod /dev/mydev3 c 120 3
+
+insmod devtest.ko device_minor_count=2 buf_size=10
+./apptest /dev/mydev0 W 123456
+./apptest /dev/mydev0 W 123456
+./apptest /dev/mydev0 W 123456
+./apptest /dev/mydev0 R 6
+./apptest /dev/mydev0 R 6
+./apptest /dev/mydev0 R 6
+./apptest /dev/mydev0 W 123456
+./apptest /dev/mydev0 I 2
+./apptest /dev/mydev0 I 1
+./apptest /dev/mydev0 I 2
+./apptest /dev/mydev0 W 123456
+./apptest /dev/mydev0 I 2
+rmmod devtest
+

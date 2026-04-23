@@ -1,0 +1,1 @@
+cmd_/home/user/work/practice_dd/EX01-03_para/para.mod := printf '%s\n'   para.o | awk '!x[$$0]++ { print("/home/user/work/practice_dd/EX01-03_para/"$$0) }' > /home/user/work/practice_dd/EX01-03_para/para.mod

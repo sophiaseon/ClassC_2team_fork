@@ -1,0 +1,29 @@
+# 아래 참조하여 soc 노드에 my_buzzer@7e20c000 노드를 추가해야 함
+&soc {
+        /* add here */
+        my_buzzer@7e20c000 {
+             compatible = "my-buzzer";
+             reg = <0x7e20c000 0x28>;
+             clocks = <&clocks BCM2835_CLOCK_PWM>;
+             assigned-clocks = <&clocks BCM2835_CLOCK_PWM>;
+             assigned-clock-rates = <10000000>;
+             pinctrl-names = "default";
+             pinctrl-0 = <&pwm0_gpio12>;
+        };
+
+        ...
+};
+
+# 디바이스 파일 생성 (부팅 후 한번만)
+mknod /dev/mybuzzer c 121 0
+
+# 모듈 로딩
+cd /mnt/nfs
+insmod buzzertest.ko
+
+# apptest 실행
+./apptest W HCHCEBFBHCJCJCHDHCMCQCOBMBOD
+
+# 모듈 언로딩
+rmmod buzzertest
+

@@ -1,0 +1,1 @@
+cmd_/home/user/work/practice_dd/EX01-02_hello/hello.mod := printf '%s\n'   hello.o | awk '!x[$$0]++ { print("/home/user/work/practice_dd/EX01-02_hello/"$$0) }' > /home/user/work/practice_dd/EX01-02_hello/hello.mod

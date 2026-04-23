@@ -1,0 +1,1 @@
+cmd_/home/user/work/practice_dd/EX04-04_std_platform_dt_gpio/modules.order := {   echo /home/user/work/practice_dd/EX04-04_std_platform_dt_gpio/devtest.ko; :; } > /home/user/work/practice_dd/EX04-04_std_platform_dt_gpio/modules.order

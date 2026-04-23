@@ -1,0 +1,1 @@
+/home/user/work/practice_dd/EX03-09_std_blocking_io/devtest.o

@@ -1,0 +1,27 @@
+QMAKE_CXX.QT_COMPILER_STDCXX = 201402L
+QMAKE_CXX.QMAKE_GCC_MAJOR_VERSION = 7
+QMAKE_CXX.QMAKE_GCC_MINOR_VERSION = 3
+QMAKE_CXX.QMAKE_GCC_PATCH_VERSION = 1
+QMAKE_CXX.COMPILER_MACROS = \
+    QT_COMPILER_STDCXX \
+    QMAKE_GCC_MAJOR_VERSION \
+    QMAKE_GCC_MINOR_VERSION \
+    QMAKE_GCC_PATCH_VERSION
+QMAKE_CXX.INCDIRS = \
+    /home/user/work/buildroot-2024.02.1/output/host/opt/ext-toolchain/aarch64-linux-gnu/include/c++/7.3.1 \
+    /home/user/work/buildroot-2024.02.1/output/host/opt/ext-toolchain/aarch64-linux-gnu/include/c++/7.3.1/aarch64-linux-gnu \
+    /home/user/work/buildroot-2024.02.1/output/host/opt/ext-toolchain/aarch64-linux-gnu/include/c++/7.3.1/backward \
+    /home/user/work/buildroot-2024.02.1/output/host/opt/ext-toolchain/lib/gcc/aarch64-linux-gnu/7.3.1/include \
+    /home/user/work/buildroot-2024.02.1/output/host/opt/ext-toolchain/lib/gcc/aarch64-linux-gnu/7.3.1/include-fixed \
+    /home/user/work/buildroot-2024.02.1/output/host/opt/ext-toolchain/aarch64-linux-gnu/include \
+    /home/user/work/buildroot-2024.02.1/output/host/aarch64-buildroot-linux-gnu/sysroot/usr/include
+QMAKE_CXX.LIBDIRS = \
+    /home/user/work/buildroot-2024.02.1/output/host/opt/ext-toolchain/lib/gcc/aarch64-linux-gnu/7.3.1 \
+    /home/user/work/buildroot-2024.02.1/output/host/opt/ext-toolchain/lib/gcc/aarch64-linux-gnu \
+    /home/user/work/buildroot-2024.02.1/output/host/opt/ext-toolchain/lib/gcc \
+    /home/user/work/buildroot-2024.02.1/output/host/opt/ext-toolchain/aarch64-linux-gnu/lib64 \
+    /home/user/work/buildroot-2024.02.1/output/host/aarch64-buildroot-linux-gnu/sysroot/lib64 \
+    /home/user/work/buildroot-2024.02.1/output/host/aarch64-buildroot-linux-gnu/sysroot/usr/lib64 \
+    /home/user/work/buildroot-2024.02.1/output/host/opt/ext-toolchain/aarch64-linux-gnu/lib \
+    /home/user/work/buildroot-2024.02.1/output/host/aarch64-buildroot-linux-gnu/sysroot/lib \
+    /home/user/work/buildroot-2024.02.1/output/host/aarch64-buildroot-linux-gnu/sysroot/usr/lib

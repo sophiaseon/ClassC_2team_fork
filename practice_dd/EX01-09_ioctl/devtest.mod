@@ -1,0 +1,1 @@
+/home/user/work/practice_dd/EX01-09_ioctl/devtest.o

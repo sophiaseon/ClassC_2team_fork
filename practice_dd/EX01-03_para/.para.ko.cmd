@@ -1,0 +1,1 @@
+cmd_/home/user/work/practice_dd/EX01-03_para/para.ko := aarch64-linux-gnu-ld -r -EL  -maarch64elf -z noexecstack --build-id=sha1  -T scripts/module.lds -o /home/user/work/practice_dd/EX01-03_para/para.ko /home/user/work/practice_dd/EX01-03_para/para.o /home/user/work/practice_dd/EX01-03_para/para.mod.o;  true

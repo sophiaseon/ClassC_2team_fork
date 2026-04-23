@@ -1,0 +1,21 @@
+&soc {
+        /* add here */
+        my_pdev@7e200000 {
+                compatible = "my-pdev";
+                led-gpios = <&gpio 5 GPIO_ACTIVE_LOW>,
+                            <&gpio 6 GPIO_ACTIVE_LOW>;
+                interrupt-parent = <&gpio>;
+                interrupts = <17 2>;
+                led_status = <0>;
+        };
+
+	...
+};
+
+config MYDEV
+        tristate "mydev platform driver for WT2837"
+        default n
+        help
+                If you want to enable mydev platform driver
+                say Y or M here, otherwise say N.
+

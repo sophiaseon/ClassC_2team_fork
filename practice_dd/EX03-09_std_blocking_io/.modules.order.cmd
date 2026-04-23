@@ -1,0 +1,1 @@
+cmd_/home/user/work/practice_dd/EX03-09_std_blocking_io/modules.order := {   echo /home/user/work/practice_dd/EX03-09_std_blocking_io/devtest.ko; :; } > /home/user/work/practice_dd/EX03-09_std_blocking_io/modules.order

@@ -1,0 +1,1 @@
+cmd_/home/user/work/practice_dd/EX03-03_std_tasklet/modules.order := {   echo /home/user/work/practice_dd/EX03-03_std_tasklet/devtest.ko; :; } > /home/user/work/practice_dd/EX03-03_std_tasklet/modules.order

@@ -1,0 +1,1 @@
+cmd_/home/user/work/practice_dd/EX03-08_std_waitqueue/modules.order := {   echo /home/user/work/practice_dd/EX03-08_std_waitqueue/devtest.ko; :; } > /home/user/work/practice_dd/EX03-08_std_waitqueue/modules.order

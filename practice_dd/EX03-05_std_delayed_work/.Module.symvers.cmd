@@ -1,0 +1,1 @@
+cmd_/home/user/work/practice_dd/EX03-05_std_delayed_work/Module.symvers :=  sed 's/ko$$/o/'  /home/user/work/practice_dd/EX03-05_std_delayed_work/modules.order | scripts/mod/modpost -m -a    -o /home/user/work/practice_dd/EX03-05_std_delayed_work/Module.symvers -e -i Module.symvers -T - 

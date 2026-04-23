@@ -1,0 +1,1 @@
+cmd_/home/user/work/practice_dd/EX03-01_std_time/devtest.mod := printf '%s\n'   devtest.o | awk '!x[$$0]++ { print("/home/user/work/practice_dd/EX03-01_std_time/"$$0) }' > /home/user/work/practice_dd/EX03-01_std_time/devtest.mod

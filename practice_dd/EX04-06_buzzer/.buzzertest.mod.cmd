@@ -1,0 +1,1 @@
+cmd_/home/user/work/practice_dd/EX04-06_buzzer/buzzertest.mod := printf '%s\n'   buzzertest.o | awk '!x[$$0]++ { print("/home/user/work/practice_dd/EX04-06_buzzer/"$$0) }' > /home/user/work/practice_dd/EX04-06_buzzer/buzzertest.mod

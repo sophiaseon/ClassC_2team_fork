@@ -1,0 +1,1 @@
+cmd_/home/user/work/practice_dd/EX01-02_hello/hello.ko := aarch64-linux-gnu-ld -r -EL  -maarch64elf -z noexecstack --build-id=sha1  -T scripts/module.lds -o /home/user/work/practice_dd/EX01-02_hello/hello.ko /home/user/work/practice_dd/EX01-02_hello/hello.o /home/user/work/practice_dd/EX01-02_hello/hello.mod.o;  true

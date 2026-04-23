@@ -1,0 +1,1 @@
+/home/user/work/practice_dd/EX04-02_std_platform_resources/devtest.o
